@@ -1,7 +1,6 @@
 package main
 
 import (
-    "path/filepath"
 	"bytes"
 	"encoding/json"
 	"flag"
@@ -9,143 +8,99 @@ import (
 	"io"
 	"net/http"
 	"os"
-    "os/exec"
-    "strings"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
+	"github.com/joho/godotenv"
 )
 
 var debug_enabled = flag.Bool("d", false, "enable debug mode")
-var openai_api_key_file_name = "../openai_api_key.txt"
-
-func DebugPrint(msg string){
-    if *debug_enabled{
-        fmt.Println(msg)
-    }
-}
-func DebugPrintf(msg string){
-    if *debug_enabled{
-        fmt.Printf(msg)
-    }
-}
 
 func main() {
     InitFlags()
 }
 
-func getBaseDir() (string, error) {
-	ex, err := os.Executable()
-	if err != nil {
-		return "", err
-	}
-	baseDir := filepath.Dir(ex)
-	return baseDir, nil
-}
-
 func InitFlags(){
-
-    env_help_variable_flag:=            flag.Bool("env",false,"help env for flag ")
-
-    openai_api_key:=                    flag.String("s", "", "set your openai api key")
 
     user_openai_unix_prompt:=           flag.String("q", "", "Ask a basic unix shell query and get a command back")
 
     user_openai_general_command:=       flag.String("g", "", "Ask a general GPT question")
 
-    stdin_filter_command:=                     flag.String("i", "", "filter or combine query with stdin")
+    stdin_filter_command:=              flag.String("i", "", "filter or combine query with stdin")
 
     user_openai_unix_explain_prompt:=   flag.String("e", "", "explain what a command does")
 
     execute_last_command :=             flag.Bool("l", false, "run last command that exist in the local sbot history file")
 
     show_history_command :=             flag.Bool("y", false, "show local history")
+
+
     flag.Parse()
 
-    if(*env_help_variable_flag){
-        set_env_variable_instructions()
-    } else if(len(*openai_api_key) > 0){
-        SetOpenAIAPIKey(*openai_api_key)
-        fmt.Print("adding your new openai api key")
-    } else if(len(*user_openai_unix_prompt) > 0){
-        options,err := GetOpenAIAPIBodyOptions("../prompts/openai_prompt_style_unix.json")
+    if len(*user_openai_unix_prompt) > 0{
+        options,err := GetOpenAIAPIBodyOptions(filepath.Join(GetBaseDir(), "prompts/openai_prompt_style_unix.json"))
         if err!= nil{
-            panic("openai options are empty ")
+           fmt.Println("openai options are empty ")
         }
-        ExecuteOpenAIQuery(GetOpenAIAPIKey(),  options, *user_openai_unix_prompt)
-    }else if(len(*user_openai_unix_explain_prompt) > 0){
-        options,err := GetOpenAIAPIBodyOptions("../prompts/openai_prompt_style_explain.json")
+        ExecuteOpenAIQuery(GetOpenAIAPIKey(),  options, *user_openai_unix_prompt, true)
+    }else if len(*user_openai_unix_explain_prompt) > 0{
+        options,err := GetOpenAIAPIBodyOptions(filepath.Join(GetBaseDir(), "prompts/openai_prompt_style_explain.json"))
         if err!= nil{
-            panic("openai options are empty ")
+            fmt.Println("openai options are empty ")
         }
-        ExecuteOpenAIQuery(GetOpenAIAPIKey(),  options, *user_openai_unix_explain_prompt)
-    }else if(len(*user_openai_general_command) > 0){
-        options,err := GetOpenAIAPIBodyOptions("../prompts/openai_prompt_style_general.json")
+        ExecuteOpenAIQuery(GetOpenAIAPIKey(),  options, *user_openai_unix_explain_prompt, false)
+    }else if len(*user_openai_general_command) > 0{
+        options,err := GetOpenAIAPIBodyOptions(filepath.Join(GetBaseDir(),"prompts/openai_prompt_style_general.json"))
         if err!=nil{
-            panic("openai options are empty ")
+            fmt.Println("openai options are empty ")
         }
 
-        ExecuteOpenAIQuery(GetOpenAIAPIKey(),  options, *user_openai_general_command)
-
-    }else if(len(*stdin_filter_command) >= 0){
+        ExecuteOpenAIQuery(GetOpenAIAPIKey(),  options, *user_openai_general_command, false)
+    }else if len(*stdin_filter_command) >= 0 && StdinExist(){
+        DebugPrint("stdin value was added")
 	    stdin, _ := io.ReadAll(os.Stdin)
+        DebugPrint("stdin value was added")
         stdin_filter_prompt:=string(stdin)+*stdin_filter_command
-        options,err := GetOpenAIAPIBodyOptions("../prompts/openai_prompt_style_general.json")
+        options,err := GetOpenAIAPIBodyOptions(filepath.Join(GetBaseDir(),"prompts/openai_prompt_style_general.json"))
         if err!=nil{
-            panic("openai options are empty ")
+            fmt.Println("openai options are empty ")
         }
-        ExecuteOpenAIQuery(GetOpenAIAPIKey(), options, stdin_filter_prompt)
+        ExecuteOpenAIQuery(GetOpenAIAPIKey(), options, stdin_filter_prompt, false)
+
     }else if(*execute_last_command){
-        execute_command(last_command_in_history("../sbot_command_history.txt"))
-    }else if(*show_history_command){
+        execute_command(last_command_in_history(filepath.Join(GetBaseDir(), "sbot_command_history.txt")))
+    }else if *show_history_command{
         ShowHistory()
     }else{
         fmt.Println("please input the correct options")
     }
-
-
 }
 
-
 // Creation and Sending OpenAI prompt Section
-func ExecuteOpenAIQuery(api_key string,  options OpenAIBodyOptions, user_prompt string){
+func ExecuteOpenAIQuery(api_key string,  options OpenAIBodyOptions, user_prompt string, add_to_history bool){
     new_content:=options.Messages[1].Content + user_prompt
     options.Messages[1].Content = new_content
-    SendOpenAIQuery(api_key, options)
+    SendOpenAIQuery(api_key, options, add_to_history)
 }
 
 func ExecuteOpenAIUnixExplainQuery(api_key string,  options OpenAIBodyOptions, user_prompt string){
     new_content:=options.Messages[1].Content + user_prompt
     options.Messages[1].Content = new_content
-    SendOpenAIQuery(api_key, options)
+    SendOpenAIQuery(api_key, options, false)
 }
 
-func GetOpenAIAPIBodyOptions(file_name string) (OpenAIBodyOptions, error){
-    file_content,err := os.ReadFile(file_name)
-    if(err != nil){
-        fmt.Print("An error came up reading the file ", err)
-    }
-
-    //json_value, err :=json.Marshal(file_content)
-    var open_ai_options OpenAIBodyOptions
-
-    if err := json.Unmarshal(file_content, &open_ai_options); err != nil{
-        panic("could not encode json "  )
-        //return OpenAIBodyOptions{}, fmt.Errorf("could not Unmarshal json")
-    }
-
-    return open_ai_options, nil
-}
-
-func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions){
+func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions, add_to_history bool){
 
     post_body, err :=json.Marshal(openai_body)
     if err != nil{
-        panic("could not encode json")
+        fmt.Println("could not encode json")
     }
 
     response_body := bytes.NewBuffer(post_body)
     request, err:=http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", response_body)
     if err != nil{
-        panic("An issue occured attempting to reach the openapi api url")
+        fmt.Println("An issue occured attempting to reach the openapi api url")
     }
 
     request.Header.Add("Content-Type", "application/json")
@@ -153,13 +108,13 @@ func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions){
     client:=&http.Client{}
     response, error := client.Do(request)
     if error != nil{
-        panic("there was an issue with do the request")
+        fmt.Println(error)
     }
     defer request.Body.Close()
 
     response_bytes,err:= io.ReadAll(response.Body)
     if err != nil{
-        panic("could not interprit the response data")
+        fmt.Println("could not interprit the response data")
     }
 
     var response_json ChatCompletion
@@ -167,45 +122,29 @@ func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions){
     err = json.Unmarshal(response_bytes, &response_json)
 
     if err != nil{
-        panic(err)
+        fmt.Println(err)
     }
     command:=response_json.Choices[0].Message.Content
     DebugPrint("response from openai " + string(response_bytes))
     fmt.Println()
     fmt.Println(command)
-    WriteAppendToLocalCommandHistory("../sbot_command_history.txt", command, 700)
-}
-
-// Seting and Getting openai_api_key
-func SetOpenAIAPIKey(openai_api_key string){
-    api_key_content := []byte (openai_api_key)
-    err:= os.WriteFile(openai_api_key_file_name, api_key_content, 700)
-
-    if err != nil{
-        panic("failed to create or write to the openai_api_key file")
+    if add_to_history{
+        WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), command, 700)
     }
 }
 
-func GetOpenAIAPIKey() (string){
-
-    value, err := os.ReadFile(openai_api_key_file_name)
-    if(err != nil){
-        panic(err)
-    }
-    return string(value)
-}
 func execute_command(command string)(string, string, error){
     //!TODO sanitize any special chracters
     //re := regexp.MustCompile(`^[a-zA-Z0-9\s\.\|\'\"\-\/\_]+$`)
-    settings_file_content,err:=os.ReadFile("../setting.json")
+    settings_file_content,err:=os.ReadFile(filepath.Join(GetBaseDir(), "setting.json"))
     if err != nil{
-        panic(err)
+        fmt.Println(err)
     }
 
     var common_settings CommonSettings
     err=json.Unmarshal(settings_file_content, &common_settings )
     if err != nil{
-        panic(err)
+        fmt.Println(err)
     }
     // Check if the command matches the allowed pattern
     // read from settings file and unmarshal as shown
@@ -246,48 +185,51 @@ func execute_command(command string)(string, string, error){
     }
     return stdout.String(), stderr.String(), err
 }
+// getting stuff from files
+func GetOpenAIAPIBodyOptions(file_path string) (OpenAIBodyOptions, error){
+    file_content,err := os.ReadFile(file_path)
+    if(err != nil){
+        fmt.Print("An error came up reading the file ", file_path, err);
+    }
+    //json_value, err :=json.Marshal(file_content)
+    var open_ai_options OpenAIBodyOptions
+
+    if err := json.Unmarshal(file_content, &open_ai_options); err != nil{
+        fmt.Println("could not encode json "  )
+        //return OpenAIBodyOptions{}, fmt.Errorf("could not Unmarshal json")
+    }
+
+    return open_ai_options, nil
+}
+
+func GetOpenAIAPIKey() (string){
+    err := godotenv.Load(filepath.Join(GetBaseDir(),".env"))
+
+    if err != nil{
+        fmt.Println("Error loading .env file")
+    }
+    return os.Getenv("OPENAI_API_KEY")
+}
+
 
 func last_command_in_history(file_name string) string {
+    DebugPrint("checking last command");
     last_command:=""
     bytesRead,err := os.ReadFile(file_name)
     if(err != nil){
-        panic(err)
+        fmt.Println(err)
     }
     fileContent := string(bytesRead)
     lines := strings.Split(fileContent, "\n")
     last_command = lines[len(lines) - 1]
     if len(last_command) <= 0 {
-        panic("command history is empty")
+        fmt.Println("command history is empty")
     }
+
+    DebugPrint("last command in history is " + last_command);
     return last_command
 }
 
-func set_env_variable_instructions(){
-fmt.Println(`
-To set variable only for current shell:
-
-VARNAME="my value"
-
-To set it for current shell and all processes started from current shell:
-
-export VARNAME="my value"      # shorter, less portable version
-
-To set it permanently for all future bash sessions add such line to your .bashrc file in your $HOME directory.
-
-To set it permanently, and system wide (all users, all processes) add set variable in /etc/environment:
-
-sudo -H gedit /etc/environment
-
-This file only accepts variable assignments like:
-
-VARNAME="my value"
-
-Do not use the export keyword here.
-
-Use source ~/.bashrc in your terminal for the changes to take place immediately.
-`)
-
-}
 
 func WriteAppendToLocalCommandHistory(file_name string, content_passed string, perm int){
     content_from_file, err:=os.ReadFile(file_name)
@@ -303,13 +245,53 @@ func WriteAppendToLocalCommandHistory(file_name string, content_passed string, p
 }
 
 func ShowHistory(){
-    content, err:= os.ReadFile("../sbot_command_history.txt")
+    content, err:= os.ReadFile(filepath.Join(GetBaseDir(), "sbot_command_history.txt" ) )
     if err != nil{
-        panic(err)
+        fmt.Println(err)
     }
     fmt.Println(string(content))
 }
 
+
+// util functions
+func GetBaseDir() string {
+    file_executable_path, err := os.Executable()
+    bin_dir := filepath.Dir(file_executable_path)
+	if err != nil {
+        fmt.Println(err)
+	}
+    base_dir := filepath.Dir(bin_dir)
+    DebugPrint("base dir is " + base_dir )
+	return base_dir
+}
+
+
+func StdinExist() bool{
+    fi, err := os.Stdin.Stat()
+    if err != nil {
+        fmt.Println(err)
+        return false;
+    }
+    if fi.Mode() & os.ModeNamedPipe == 0 {
+        return false
+    } else {
+        return true
+    }
+}
+
+func DebugPrint(msg string){
+    if *debug_enabled{
+        fmt.Println(msg)
+    }
+}
+func DebugPrintf(msg string){
+    if *debug_enabled{
+        fmt.Printf(msg)
+    }
+}
+
+
+//struct sections
 type OpenAIBodyOptions struct {
     Model    string           `json:"model"`
     Messages []OpenAIMessages `json:"messages"`
@@ -355,3 +337,4 @@ type CommonSettings struct{
     AllowDangerousCommands bool     `json:"allow_dangerous_commands"`
     DangerousCommands      []string `json:"dangerous_commands"`
 }
+
