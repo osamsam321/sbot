@@ -126,7 +126,6 @@ func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions, add_to_histo
     }
     command:=response_json.Choices[0].Message.Content
     DebugPrint("response from openai " + string(response_bytes))
-    fmt.Println()
     fmt.Println(command)
     if add_to_history{
         WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), command, 700)
@@ -154,7 +153,7 @@ func execute_command(command string)(string, string, error){
    //     return "", "", nil
    // }
 
-    dangerous_commands:= common_settings.DangerousCommands;
+    dangerous_commands:= common_settings.DangerousCommands
 
     for i:=0;i< len(dangerous_commands);i++ {
        if strings.Contains(command, dangerous_commands[i]) {
@@ -165,7 +164,7 @@ func execute_command(command string)(string, string, error){
     }
 
     // now execute command
-    const shell_to_use = "bash"
+    shell_to_use := common_settings.Shell
     var stdout bytes.Buffer
     var stderr bytes.Buffer
     DebugPrint("going to run the command with the follow components " + shell_to_use + " " + "-c " + command)
@@ -335,6 +334,7 @@ type Usage struct {
 }
 type CommonSettings struct{
     AllowDangerousCommands bool     `json:"allow_dangerous_commands"`
+    Shell string                    `json:"shell"`
     DangerousCommands      []string `json:"dangerous_commands"`
 }
 

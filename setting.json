@@ -1,5 +1,6 @@
 {
     "allow_dangerous_commands": false,
+    "shell": "/bin/bash",
     "dangerous_commands": [
         "rm",
         "mv",
