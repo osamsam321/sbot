@@ -1,9 +1,10 @@
-DEST_DIR=target/.sbot
+DEST_DIR=target/sbot
 SRC_BIN=bin
 PROMPTS_SRC=prompts
 COMMAND_HISTORY=sbot_command_history.txt
 SETTING_SRC=setting.json
 ENV.EXAMPLE=.env.example
+ENV=.env
 
 BINARY=../$(DEST_DIR)/bin/sbot
 
@@ -15,13 +16,16 @@ all: build
 
 # Build the Go project
 build:
+	@echo "Started build."
 	@mkdir -p $(DEST_DIR)
 	cp -r $(PROMPTS_SRC) $(DEST_DIR)
 	cp $(SETTING_SRC) $(DEST_DIR)
 	touch $(DEST_DIR)/$(COMMAND_HISTORY)
-	cp $(ENV.EXAMPLE) $(DEST_DIR)
+	cp $(ENV.EXAMPLE) $(DEST_DIR)/$(ENV)
 	# nothing after this line
 	cd $(SRC_BIN) && go build -o $(BINARY)
+	find target -type f -exec chmod 700 {} + && find target -type d -exec chmod 700 {} +
+	@echo "build complete."
 
 # Clean up build artifacts
 clean:
@@ -30,5 +34,8 @@ clean:
 	rm -rf $(DEST_DIR)/$(PROMPTS_SRC)
 	rm -f $(DEST_DIR)/$(SETTING_SRC)
 	rm -f $(DEST_DIR)/$(COMMAND_HISTORY)
-	rm -f $(DEST_DIR)/$(ENV.EXAMPLE)
+	rm -f $(DEST_DIR)/$(ENV)
 	@echo "Cleanup complete."
+
+release: clean build
+	cd target; zip -r sbot.zip sbot && mv sbot.zip /tmp;
