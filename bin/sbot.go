@@ -60,7 +60,6 @@ func InitFlags(){
     }else if len(*stdin_filter_command) >= 0 && StdinExist(){
         DebugPrint("stdin value was added")
 	    stdin, _ := io.ReadAll(os.Stdin)
-        DebugPrint("stdin value was added")
         stdin_filter_prompt:=string(stdin)+*stdin_filter_command
         options,err := GetOpenAIAPIBodyOptions(filepath.Join(GetBaseDir(),"prompts/openai_prompt_style_general.json"))
         if err!=nil{
@@ -174,7 +173,6 @@ func execute_command(command string)(string, string, error){
     fmt.Println("Command to execute >>> " + cmd.String())
     err = cmd.Run()
     if err != nil{
-        DebugPrint("An error occured while running command")
         fmt.Print("An error occured >>> ")
         fmt.Println(cmd.Stderr)
     }
@@ -260,7 +258,6 @@ func GetBaseDir() string {
         fmt.Println(err)
 	}
     base_dir := filepath.Dir(bin_dir)
-    DebugPrint("base dir is " + base_dir )
 	return base_dir
 }
 

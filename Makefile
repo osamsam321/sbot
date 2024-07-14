@@ -37,6 +37,6 @@ clean:
 	@echo "Cleanup complete."
 
 release: clean build
-	@cd target; zip -r sbot.zip sbot && mv sbot.zip /tmp;
+	@cd target; zip -r sbot*.zip sbot && mv sbot*.zip /tmp;
 	@echo "release completed"
 
