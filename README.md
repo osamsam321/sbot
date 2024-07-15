@@ -96,7 +96,7 @@ sbot -q "<your query>"
 
 **Example**:
 ```sh
-sbot -q "list all files in the current directory"
+sbot -q "find all files in my current directory that are txt files or jsons"
 ```
 
 ### Show Local History
