@@ -73,7 +73,7 @@ sbot -i "<your query>"
 
 **Example**:
 ```sh
-echo "list files" | sbot -i "ls"
+echo "what is a popular alternative to pet cat?" | sbot -i "what is the history of this animal?"
 ```
 
 ### Run Last Command from Local History
