@@ -1,7 +1,7 @@
 
 # SBOT Tool Instructions
 
-The `sbot` tool is a command-line utility designed to help you manage and deploy your applications. Below are the instructions on how to use the various commands available in `sbot`.
+The `sbot` tool is a command-line utility designed to work with ChatGPT. Below are the instructions on how to use the various commands available in `sbot`.
 
 ## Table of Contents
 - [Basic Usage](#basic-usage)
