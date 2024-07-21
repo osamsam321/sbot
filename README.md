@@ -25,14 +25,6 @@ sbot [options]
 
 ## Commands
 
-### Enable Debug Mode
-
-Enable debug mode to get more detailed output for troubleshooting.
-
-**Usage**:
-```sh
-sbot -d
-```
 
 ### Ask a Basic Unix Shell Query
 
@@ -105,6 +97,15 @@ Show the local history of commands executed with `sbot`.
 **Usage**:
 ```sh
 sbot -y
+```
+
+### Enable Debug Mode
+
+Enable debug mode to get more detailed output for troubleshooting.
+
+**Usage**:
+```sh
+sbot -d
 ```
 
 ### Help
