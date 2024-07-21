@@ -6,13 +6,13 @@ The `sbot` tool is a command-line utility designed to help you manage and deploy
 ## Table of Contents
 - [Basic Usage](#basic-usage)
 - [Commands](#commands)
+  - [Ask a Basic Unix Shell Query](#ask-a-basic-unix-shell-query)
+  - [Run Last Command from Local History](#run-last-command-from-local-history)
+  - [Show Local History](#show-local-history)
   - [Enable Debug Mode](#enable-debug-mode)
   - [Explain a Command](#explain-a-command)
   - [Ask a General GPT Question](#ask-a-general-gpt-question)
   - [Filter or Combine Query with Stdin](#filter-or-combine-query-with-stdin)
-  - [Run Last Command from Local History](#run-last-command-from-local-history)
-  - [Ask a Basic Unix Shell Query](#ask-a-basic-unix-shell-query)
-  - [Show Local History](#show-local-history)
   - [Help](#help)
 
 ## Basic Usage
