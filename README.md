@@ -34,6 +34,19 @@ Enable debug mode to get more detailed output for troubleshooting.
 sbot -d
 ```
 
+### Ask a Basic Unix Shell Query
+
+Ask a basic Unix shell query and get a command back.
+
+**Usage**:
+```sh
+sbot -q "<your query>"
+```
+
+**Example**:
+```sh
+sbot -q "find all files in my current directory that are txt or json files"
+```
 ### Explain a Command
 
 Explain what a specific command does.
@@ -83,20 +96,6 @@ Run the last command that exists in the local sbot history file.
 **Usage**:
 ```sh
 sbot -l
-```
-
-### Ask a Basic Unix Shell Query
-
-Ask a basic Unix shell query and get a command back.
-
-**Usage**:
-```sh
-sbot -q "<your query>"
-```
-
-**Example**:
-```sh
-sbot -q "find all files in my current directory that are txt or json files"
 ```
 
 ### Show Local History
