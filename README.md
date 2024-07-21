@@ -38,6 +38,26 @@ sbot -q "<your query>"
 **Example**:
 ```sh
 sbot -q "find all files in my current directory that are txt or json files"
+
+
+```
+
+### Run Last Command from Local History
+
+Run the last command that exists in the local sbot history file.
+
+**Usage**:
+```sh
+sbot -l
+```
+
+### Show Local History
+
+Show the local history of commands executed with `sbot`.
+
+**Usage**:
+```sh
+sbot -y
 ```
 ### Explain a Command
 
@@ -81,23 +101,7 @@ sbot -i "<your query>"
 echo "what is a popular alternative to pet cat?" | sbot -i "what is the history of this animal?"
 ```
 
-### Run Last Command from Local History
 
-Run the last command that exists in the local sbot history file.
-
-**Usage**:
-```sh
-sbot -l
-```
-
-### Show Local History
-
-Show the local history of commands executed with `sbot`.
-
-**Usage**:
-```sh
-sbot -y
-```
 
 ### Enable Debug Mode
 
