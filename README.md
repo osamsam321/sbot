@@ -23,10 +23,10 @@ Set your API Key in the .env file and use a editor to add the key
 mv .env.example .env && vi .env
 ```
 
-If you have a *nix env variable
+If you have a *nix env variable. You can copy and run this command.
 
 ```
-mv .env.example .env && sed -i "s/openai_token=/openai_token=$OPENAI_API_KEY/" .env
+mv .env.example .env && sed -i "s/OPENAI_API_KEY=/OPENAI_API_KEY=$OPENAI_API_KEY/" .env
 ```
 
 ## Basic Usage
