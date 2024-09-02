@@ -17,7 +17,7 @@ The `sbot` tool is a command-line utility designed to work with ChatGPT. Below a
  
   
 ## Set Your API Key
-Set your API Key in the .env file and use a editor to add the Key 
+Set your API Key in the .env file and use a editor to add the key 
 ```
 mv .env.example .env && vi .env
 ```
