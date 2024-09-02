@@ -14,6 +14,17 @@ The `sbot` tool is a command-line utility designed to work with ChatGPT. Below a
   - [Ask a General GPT Question](#ask-a-general-gpt-question)
   - [Filter or Combine Query with Stdin](#filter-or-combine-query-with-stdin)
   - [Help](#help)
+ 
+  
+## Set Your API Token
+Set your API token in the .env file 
+```
+mv .env.example .env && vim .env
+```
+
+If you have a *nix env variable
+
+mv .env.example .env && sed -i "s/openai_token=/openai_token=$OPENAI_API_KEY/" .env
 
 ## Basic Usage
 
