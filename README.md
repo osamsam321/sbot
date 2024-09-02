@@ -142,5 +142,3 @@ This document provides a basic overview of how to use the `sbot` tool. For more 
 ```sh
 sbot -h
 ```
-
-Feel free to explore the various features and options available in `sbot` to make the most out of this tool for managing and deploying your projects.
