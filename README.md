@@ -24,7 +24,9 @@ mv .env.example .env && vi .env
 
 If you have a *nix env variable
 
-```mv .env.example .env && sed -i "s/openai_token=/openai_token=$OPENAI_API_KEY/" .env```
+```
+mv .env.example .env && sed -i "s/openai_token=/openai_token=$OPENAI_API_KEY/" .env
+```
 
 ## Basic Usage
 
