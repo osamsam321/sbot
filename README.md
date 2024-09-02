@@ -16,15 +16,15 @@ The `sbot` tool is a command-line utility designed to work with ChatGPT. Below a
   - [Help](#help)
  
   
-## Set Your API Token
-Set your API token in the .env file 
+## Set Your API Key
+Set your API Key in the .env file and use a editor to add the Key 
 ```
-mv .env.example .env && vim .env
+mv .env.example .env && vi .env
 ```
 
 If you have a *nix env variable
 
-mv .env.example .env && sed -i "s/openai_token=/openai_token=$OPENAI_API_KEY/" .env
+```mv .env.example .env && sed -i "s/openai_token=/openai_token=$OPENAI_API_KEY/" .env```
 
 ## Basic Usage
 
