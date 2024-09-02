@@ -18,15 +18,19 @@ The `sbot` tool is a command-line utility designed to work with ChatGPT. Below a
  
   
 ## Set Your API Key
+Create the .env file in the root of the project if it doesn't exist.
+```
+touch .env
+```
 Set your API Key in the .env file and use a editor to add the key 
 ```
-mv .env.example .env && vi .env
+vi .env
 ```
 
 If you have a OPENAI_API_KEY env variable, you can run this command.
 
 ```
-mv .env.example .env && sed -i "s/OPENAI_API_KEY=/OPENAI_API_KEY=$OPENAI_API_KEY/" .env
+sed -i "s/OPENAI_API_KEY=/OPENAI_API_KEY=$OPENAI_API_KEY/" .env
 ```
 
 ## Basic Usage
