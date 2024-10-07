@@ -17,8 +17,9 @@ The `sbot` tool is a command-line utility designed to work with ChatGPT. Below a
   - [Help](#help)
 
 ## Install sbot
-
+```
 curl -sSL https://raw.githubusercontent.com/osamsam321/sbot/refs/heads/main/install.sh | bash
+```
 
 ## Set Your API Key
 Create the .env file in the root of the project if it doesn't exist.
