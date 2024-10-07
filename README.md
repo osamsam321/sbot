@@ -50,7 +50,7 @@ sbot [options]
 ## Commands
 
 
-### A basic nix* Shell Query
+### Basic nix* Shell Query
 
 Ask a basic Unix shell query and get a command back.
 
