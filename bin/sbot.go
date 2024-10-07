@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-
 	"github.com/joho/godotenv"
 )
 
@@ -34,7 +33,6 @@ func InitFlags(){
     execute_last_command :=             flag.Bool("l", false, "run last command that exist in the local sbot history file")
 
     show_history_command :=             flag.Bool("y", false, "show local history")
-
 
     flag.Parse()
 
@@ -111,23 +109,31 @@ func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions, add_to_histo
     }
     defer request.Body.Close()
 
-    response_bytes,err:= io.ReadAll(response.Body)
-    if err != nil{
-        fmt.Println("could not interprit the response data")
-    }
+        response_bytes,err:= io.ReadAll(response.Body)
+        if err != nil{
+            fmt.Println("could not interprit the response data")
+        }
 
-    var response_json ChatCompletion
+        var response_json ChatCompletion
+        err = json.Unmarshal(response_bytes, &response_json)
 
-    err = json.Unmarshal(response_bytes, &response_json)
+        if err != nil{
+            fmt.Println(err)
+        }
+        command:=response_json.Choices[0].Message.Content
+        DebugPrint("Status of request >> " + response.Status);
+        DebugPrint("response from openai >>" + string(response_bytes))
 
-    if err != nil{
-        fmt.Println(err)
-    }
-    command:=response_json.Choices[0].Message.Content
-    DebugPrint("response from openai " + string(response_bytes))
-    fmt.Println(command)
-    if add_to_history{
-        WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), command, 700)
+    if(response.StatusCode == 200){
+        fmt.Println(command)
+        if add_to_history{
+            WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), command, 700)
+        }
+
+
+    } else{
+        fmt.Println("ERROR: " + command);
+        DebugPrint("response from openai " + command)
     }
 }
 
@@ -258,6 +264,7 @@ func GetBaseDir() string {
         fmt.Println(err)
 	}
     base_dir := filepath.Dir(bin_dir)
+    DebugPrint("base dir is " + base_dir )
 	return base_dir
 }
 
