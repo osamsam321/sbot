@@ -52,7 +52,7 @@ sbot [options]
 
 ### Basic nix* Shell Query
 
-Ask a basic Unix shell query and get a command back.
+Describe what you want to execute in your nix* shell and get a command back.
 
 **Usage**:
 ```sh
