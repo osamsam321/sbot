@@ -7,7 +7,7 @@ The `sbot` tool is a command-line utility designed to work with ChatGPT. Below a
 - [Set Your API Key](#set-your-api-key)
 - [Basic Usage](#basic-usage)
 - [Commands](#commands)
-  - [Ask a Basic nix* Shell Query](#ask-a-basic-unix-shell-query)
+  - [Ask a Basic nix* Shell Query](#basic-nix*-shell-query)
   - [Run Last Command from Local History](#run-last-command-from-local-history)
   - [Show Local History](#show-local-history)
   - [Enable Debug Mode](#enable-debug-mode)
