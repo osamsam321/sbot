@@ -25,7 +25,6 @@ curl -sSL https://raw.githubusercontent.com/osamsam321/sbot/refs/heads/main/inst
 Create the .env file in the root of the project if it doesn't exist.
 ```
 cd ~/.sbot
-touch .env
 ```
 
 Set your API Key in the .env file and use a editor to add the key
