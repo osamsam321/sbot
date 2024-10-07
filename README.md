@@ -37,7 +37,11 @@ Optional. If you have a OPENAI_API_KEY env variable, you can run this command.
 ```
 sed -i "s/OPENAI_API_KEY=/OPENAI_API_KEY=$OPENAI_API_KEY/" .env
 ```
+Add you key to a .bashrc, zshrc or any alias hidden files
 
+```vi .bashrc
+alias sbot="~/.sbot/bin/sbot"
+```
 ## Basic Usage
 
 Once `sbot` is installed, you can run it from the command line. The general syntax for using `sbot` is:
