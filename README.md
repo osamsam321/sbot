@@ -7,7 +7,7 @@ The `sbot` tool is a command-line utility designed to work with ChatGPT. Below a
 - [Set Your API Key](#set-your-api-key)
 - [Basic Usage](#basic-usage)
 - [Commands](#commands)
-  - [Basic nix* Shell Query](#basic-nix*-shell-query)
+  - [Basic nix Shell Query](#basic-nix-shell-query)
   - [Run Last Command from Local History](#run-last-command-from-local-history)
   - [Show Local History](#show-local-history)
   - [Enable Debug Mode](#enable-debug-mode)
@@ -50,7 +50,7 @@ sbot [options]
 ## Commands
 
 
-### Basic nix* Shell Query
+### Basic nix Shell Query
 
 Describe what you want to execute in your nix* shell and get a command back.
 
