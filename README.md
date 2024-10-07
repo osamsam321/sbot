@@ -5,6 +5,7 @@ The `sbot` tool is a command-line utility designed to work with ChatGPT. Below a
 
 ## Table of Contents
 - [Set Your API Key](#set-your-api-key)
+- [Add an alias](#add-an-alias)
 - [Basic Usage](#basic-usage)
 - [Commands](#commands)
   - [Basic nix Shell Query](#basic-nix-shell-query)
@@ -37,7 +38,9 @@ Optional. If you have a OPENAI_API_KEY env variable, you can run this command.
 ```
 sed -i "s/OPENAI_API_KEY=/OPENAI_API_KEY=$OPENAI_API_KEY/" .env
 ```
-Add an alias to a .bashrc, zshrc or any alias files e.g.
+## Add an alias
+
+Add alias to a .bashrc, zshrc or any alias files e.g.
 
 ```
 vi .bashrc
