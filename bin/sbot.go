@@ -113,6 +113,7 @@ func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions, add_to_histo
             fmt.Println("There was an error from OPENAI. Status code is ", response.StatusCode)
             fmt.Println();
             fmt.Println("Please check your API key or for any other common issues");
+            panic("exiting app now");
         }
         response_bytes,err:= io.ReadAll(response.Body)
 
