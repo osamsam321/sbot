@@ -33,7 +33,7 @@ Set your API Key in the .env file and use a editor to add the key
 vi .env
 ```
 
-If you have a OPENAI_API_KEY env variable, you can run this command.
+Optional. If you have a OPENAI_API_KEY env variable, you can run this command.
 
 ```
 sed -i "s/OPENAI_API_KEY=/OPENAI_API_KEY=$OPENAI_API_KEY/" .env
