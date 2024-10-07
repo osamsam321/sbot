@@ -15,14 +15,19 @@ The `sbot` tool is a command-line utility designed to work with ChatGPT. Below a
   - [Ask a General GPT Question](#ask-a-general-gpt-question)
   - [Filter or Combine Query with Stdin](#filter-or-combine-query-with-stdin)
   - [Help](#help)
- 
-  
+
+## Install sbot
+
+curl -sSL https://raw.githubusercontent.com/osamsam321/sbot/refs/heads/main/install.sh | bash
+
 ## Set Your API Key
 Create the .env file in the root of the project if it doesn't exist.
 ```
+cd ~/.sbot
 touch .env
 ```
-Set your API Key in the .env file and use a editor to add the key 
+
+Set your API Key in the .env file and use a editor to add the key
 ```
 vi .env
 ```
