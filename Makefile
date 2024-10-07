@@ -4,6 +4,7 @@ PROMPTS_SRC=prompts
 COMMAND_HISTORY=sbot_command_history.txt
 SETTING_SRC=setting.json
 ENV.EXAMPLE=.env.example
+APP_VERSION := $(shell cat VERSION)
 ENV=.env
 
 BINARY=../$(DEST_DIR)/bin/sbot
@@ -37,6 +38,7 @@ clean:
 	@echo "Cleanup complete."
 
 release: clean build
-	@cd target; zip -r sbot*.zip sbot && mv sbot*.zip /tmp;
+
+	@cd target; zip -r sbot.zip sbot && mv sbot.zip /tmp/sbot_$(APP_VERSION).zip;
 	@echo "release completed"
 

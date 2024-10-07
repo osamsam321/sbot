@@ -105,11 +105,17 @@ func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions, add_to_histo
     client:=&http.Client{}
     response, error := client.Do(request)
     if error != nil{
-        fmt.Println(error)
+        fmt.Println("There was an error in openai response >> ", error);
     }
     defer request.Body.Close()
 
+        if response.StatusCode != 200{
+            fmt.Println("There was an error from OPENAI. Status code is ", response.StatusCode)
+            fmt.Println();
+            fmt.Println("Please check your API key or for any other common issues");
+        }
         response_bytes,err:= io.ReadAll(response.Body)
+
         if err != nil{
             fmt.Println("could not interprit the response data")
         }
@@ -120,21 +126,16 @@ func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions, add_to_histo
         if err != nil{
             fmt.Println(err)
         }
-        command:=response_json.Choices[0].Message.Content
+        command :=response_json.Choices[0].Message.Content
         DebugPrint("Status of request >> " + response.Status);
         DebugPrint("response from openai >>" + string(response_bytes))
 
-    if(response.StatusCode == 200){
         fmt.Println(command)
         if add_to_history{
             WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), command, 700)
         }
 
 
-    } else{
-        fmt.Println("ERROR: " + command);
-        DebugPrint("response from openai " + command)
-    }
 }
 
 func execute_command(command string)(string, string, error){
