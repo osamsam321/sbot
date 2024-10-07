@@ -37,10 +37,12 @@ Optional. If you have a OPENAI_API_KEY env variable, you can run this command.
 ```
 sed -i "s/OPENAI_API_KEY=/OPENAI_API_KEY=$OPENAI_API_KEY/" .env
 ```
-Add you key to a .bashrc, zshrc or any alias hidden files
+Add an alias to a .bashrc, zshrc or any alias files e.g.
 
-```vi .bashrc
+```
+vi .bashrc
 alias sbot="~/.sbot/bin/sbot"
+source ~/.bashrc
 ```
 ## Basic Usage
 
