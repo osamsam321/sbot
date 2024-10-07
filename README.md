@@ -1,19 +1,37 @@
 
 # SBOT Tool Instructions
 
-The `sbot` tool is a command-line utility designed to help you manage and deploy your applications. Below are the instructions on how to use the various commands available in `sbot`.
+The `sbot` tool is a command-line utility designed to work with ChatGPT. Below are the instructions on how to use the various commands available in `sbot`.
 
 ## Table of Contents
+- [Set Your API Key](#set-your-api-key)
 - [Basic Usage](#basic-usage)
 - [Commands](#commands)
+  - [Ask a Basic Unix Shell Query](#ask-a-basic-unix-shell-query)
+  - [Run Last Command from Local History](#run-last-command-from-local-history)
+  - [Show Local History](#show-local-history)
   - [Enable Debug Mode](#enable-debug-mode)
   - [Explain a Command](#explain-a-command)
   - [Ask a General GPT Question](#ask-a-general-gpt-question)
   - [Filter or Combine Query with Stdin](#filter-or-combine-query-with-stdin)
-  - [Run Last Command from Local History](#run-last-command-from-local-history)
-  - [Ask a Basic Unix Shell Query](#ask-a-basic-unix-shell-query)
-  - [Show Local History](#show-local-history)
   - [Help](#help)
+ 
+  
+## Set Your API Key
+Create the .env file in the root of the project if it doesn't exist.
+```
+touch .env
+```
+Set your API Key in the .env file and use a editor to add the key 
+```
+vi .env
+```
+
+If you have a OPENAI_API_KEY env variable, you can run this command.
+
+```
+sed -i "s/OPENAI_API_KEY=/OPENAI_API_KEY=$OPENAI_API_KEY/" .env
+```
 
 ## Basic Usage
 
@@ -25,15 +43,40 @@ sbot [options]
 
 ## Commands
 
-### Enable Debug Mode
 
-Enable debug mode to get more detailed output for troubleshooting.
+### Ask a Basic Unix Shell Query
+
+Ask a basic Unix shell query and get a command back.
 
 **Usage**:
 ```sh
-sbot -d
+sbot -q "<your query>"
 ```
 
+**Example**:
+```sh
+sbot -q "find all files in my current directory that are txt or json files"
+
+
+```
+
+### Run Last Command from Local History
+
+Run the last command that exists in the local sbot history file.
+
+**Usage**:
+```sh
+sbot -l
+```
+
+### Show Local History
+
+Show the local history of commands executed with `sbot`.
+
+**Usage**:
+```sh
+sbot -y
+```
 ### Explain a Command
 
 Explain what a specific command does.
@@ -73,39 +116,18 @@ sbot -i "<your query>"
 
 **Example**:
 ```sh
-echo "list files" | sbot -i "ls"
+echo "what is a popular alternative to pet cat?" | sbot -i "what is the history of this animal?"
 ```
 
-### Run Last Command from Local History
 
-Run the last command that exists in the local sbot history file.
+
+### Enable Debug Mode
+
+Enable debug mode to get more detailed output for troubleshooting.
 
 **Usage**:
 ```sh
-sbot -l
-```
-
-### Ask a Basic Unix Shell Query
-
-Ask a basic Unix shell query and get a command back.
-
-**Usage**:
-```sh
-sbot -q "<your query>"
-```
-
-**Example**:
-```sh
-sbot -q "list all files in the current directory"
-```
-
-### Show Local History
-
-Show the local history of commands executed with `sbot`.
-
-**Usage**:
-```sh
-sbot -y
+sbot -d
 ```
 
 ### Help
@@ -124,5 +146,3 @@ This document provides a basic overview of how to use the `sbot` tool. For more 
 ```sh
 sbot -h
 ```
-
-Feel free to explore the various features and options available in `sbot` to make the most out of this tool for managing and deploying your projects.
