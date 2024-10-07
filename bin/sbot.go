@@ -111,7 +111,7 @@ func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions, add_to_histo
 
         if response.StatusCode != 200{
             fmt.Printf(" \n There was an error from OPENAI. Status code is %d\n\n", response.StatusCode)
-            fmt.Printf("Please check your API key or any other common issues \n");
+            fmt.Printf("Please check your API key or any other common issues \n\n");
             os.Exit(1)
         }
         response_bytes,err:= io.ReadAll(response.Body)
