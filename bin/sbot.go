@@ -161,13 +161,14 @@ func execute_command(command string)(string, string, error){
    // }
 
     dangerous_commands:= common_settings.DangerousCommands
-
-    for i:=0;i< len(dangerous_commands);i++ {
-       if strings.Contains(command, dangerous_commands[i]) {
-           DebugPrint("command: " + command + " dangerous command: " + dangerous_commands[i] + " i " + string(i))
-           fmt.Println("your command is a 'Dangerous command type'. Please enable this in the setting file or try a different command")
-           return "", "", nil
-       }
+    if !common_settings.AllowDangerousCommands{
+        for i:=0;i< len(dangerous_commands);i++ {
+           if strings.Contains(command, dangerous_commands[i]) {
+               DebugPrint("command: " + command + " dangerous command: " + dangerous_commands[i] + " i " + string(i))
+               fmt.Println("your command is a 'Dangerous command type'. Please enable this in the setting file or try a different command")
+               return "", "", nil
+           }
+        }
     }
 
     // now execute command
