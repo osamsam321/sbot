@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+    "bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"github.com/joho/godotenv"
 )
@@ -21,14 +23,11 @@ func main() {
 }
 
 func InitFlags(){
+    DebugPrint("starting init")
 
-    user_openai_unix_prompt:=           flag.String("q", "", "Ask a basic unix shell query and get a command back")
+    user_query:=                        flag.String("q", "", "add your query here")
 
-    user_openai_general_command:=       flag.String("g", "", "Ask a general GPT question")
-
-    stdin_filter_command:=              flag.String("i", "", "filter or combine query with stdin")
-
-    user_openai_unix_explain_prompt:=   flag.String("e", "", "explain what a command does")
+    user_selected_prompt:=              flag.String("p", "", "your prompt alias")
 
     execute_last_command :=             flag.Bool("l", false, "run last command that exist in the local sbot history file")
 
@@ -36,49 +35,165 @@ func InitFlags(){
 
     flag.Parse()
 
-    if len(*user_openai_unix_prompt) > 0{
-        options,err := GetOpenAIAPIBodyOptions(filepath.Join(GetBaseDir(), "prompts/openai_prompt_style_unix.json"))
-        if err!= nil{
-           fmt.Println("openai options are empty ")
-        }
-        ExecuteOpenAIQuery(GetOpenAIAPIKey(),  options, *user_openai_unix_prompt, true)
-    }else if len(*user_openai_unix_explain_prompt) > 0{
-        options,err := GetOpenAIAPIBodyOptions(filepath.Join(GetBaseDir(), "prompts/openai_prompt_style_explain.json"))
-        if err!= nil{
-            fmt.Println("openai options are empty ")
-        }
-        ExecuteOpenAIQuery(GetOpenAIAPIKey(),  options, *user_openai_unix_explain_prompt, false)
-    }else if len(*user_openai_general_command) > 0{
-        options,err := GetOpenAIAPIBodyOptions(filepath.Join(GetBaseDir(),"prompts/openai_prompt_style_general.json"))
-        if err!=nil{
-            fmt.Println("openai options are empty ")
-        }
-
-        ExecuteOpenAIQuery(GetOpenAIAPIKey(),  options, *user_openai_general_command, false)
-    }else if len(*stdin_filter_command) >= 0 && StdinExist(){
-        DebugPrint("stdin value was added")
-	    stdin, _ := io.ReadAll(os.Stdin)
-        stdin_filter_prompt:=string(stdin)+*stdin_filter_command
-        options,err := GetOpenAIAPIBodyOptions(filepath.Join(GetBaseDir(),"prompts/openai_prompt_style_general.json"))
-        if err!=nil{
-            fmt.Println("openai options are empty ")
-        }
-        ExecuteOpenAIQuery(GetOpenAIAPIKey(), options, stdin_filter_prompt, false)
-
-    }else if(*execute_last_command){
+    if(*execute_last_command){
         execute_command(last_command_in_history(filepath.Join(GetBaseDir(), "sbot_command_history.txt")))
     }else if *show_history_command{
         ShowHistory()
-    }else{
-        fmt.Println("please input the correct options")
-    }
+    }else if len(*user_query) > 0 || StdinExist(){
+
+            if len(*user_query) > 0 && StdinExist(){
+                fmt.Println("Cannot use stdin and query option at the same time")
+                os.Exit(1)
+            }
+
+            if StdinExist(){
+                input, err := getStdinAsString()
+                if err != nil{
+                    os.Exit(1)
+                }
+                user_query=&input
+            }
+
+            prompts, err:= getAndLoadPrompts()
+            starting_prompt:=""
+            if err != nil{
+                fmt.Println("could not load any prompts. Exiting!")
+                os.Exit(1)
+            }
+            // start execution here now
+
+            if len(*user_selected_prompt) > 0{
+                prompt_aliases:= []string{}
+                prompt_aliases,err=getPromptAliases(prompts)
+                if len(prompt_aliases) <= 0{
+                    println("you have no prompts in the prompt folder. ")
+                    os.Exit(1)
+                }
+                if len(prompt_aliases) > 0 {
+                    if(slices.Contains(prompt_aliases, *user_selected_prompt)){
+                        //filepath, err:= getABSPathFromAlias(prompts, prompt_alias)
+                        prompt, err:=getPromptFromAlias(prompts, *user_selected_prompt)
+                        if err != nil{
+                            println("Unable to get prompt. Exiting!")
+                            os.Exit(1)
+                        }
+                        DebugPrint("Aliases found and being used " + prompt.Alias)
+                        // this will combine the initialial content field with the user prompt using the template type specfied in the prompt file
+                        for i, msg:=range prompt.OpenAIBodyOptions.Messages{
+                            if msg.Role=="user"{
+                               starting_prompt=msg.Content
+                               complete_prompt:=strings.ReplaceAll(starting_prompt, prompt.PlaceholderType, *user_query)
+                               prompt.OpenAIBodyOptions.Messages[i].Content=complete_prompt
+                               DebugPrint("The complete prompt " + complete_prompt)
+                            }
+                        }
+                        if starting_prompt == ""{
+                            fmt.Println("You are either missing the user field or user prompt is empty. Please fix your prompt. ")
+                            os.Exit(1)
+
+                        }
+                        SendOpenAIQuery(GetOpenAIAPIKey(), prompt.OpenAIBodyOptions, true)
+                    }
+                    if err!= nil{
+                        fmt.Println("openai options are empty ")
+                    }
+                }
+
+            }else{
+                DebugPrint("Prompt option not supplied. Using default prompt by selecting the prompt with the lowest id value")
+                prompt:=PromptOption{}
+                smallest_val:=prompts[0].ID;
+                for _, p := range prompts{
+                    if p.ID <= smallest_val{
+                       DebugPrint("prompt id " + string(p.ID))
+                       prompt = p
+                    }
+                }
+                DebugPrint("The select prompt alias is " + prompt.Alias)
+                for i, msg:=range prompt.OpenAIBodyOptions.Messages{
+                    if msg.Role=="user"{
+                        starting_prompt=msg.Content
+                        complete_prompt:=strings.ReplaceAll(starting_prompt, prompt.PlaceholderType, *user_query)
+                        prompt.OpenAIBodyOptions.Messages[i].Content=complete_prompt
+                        DebugPrint("The complete prompt " + complete_prompt)
+                    }
+                }
+                if starting_prompt == ""{
+                    fmt.Println("You are either missing the user field or user prompt is empty. Please fix your prompt. ")
+                    os.Exit(1)
+                }
+                SendOpenAIQuery(GetOpenAIAPIKey(), prompt.OpenAIBodyOptions, true)
+            }
+        }else{
+            fmt.Println("Please input the correct options.")
+        }
 }
 
-// Creation and Sending OpenAI prompt Section
-func ExecuteOpenAIQuery(api_key string,  options OpenAIBodyOptions, user_prompt string, add_to_history bool){
-    new_content:=options.Messages[1].Content + user_prompt
-    options.Messages[1].Content = new_content
-    SendOpenAIQuery(api_key, options, add_to_history)
+func printList(element []string){
+    for _, element:=range element{
+        println(element)
+    }
+}
+func getPromptFromAlias(prompts []PromptOption, prompt_alias string) (PromptOption, error){
+    for _, prompt:= range prompts{
+        if prompt.Alias == prompt_alias{
+            return prompt, nil
+        }
+    }
+    return PromptOption{}, fmt.Errorf("Prompt type was not obtainable from prompt alias")
+}
+func getAndLoadPrompts() ([]PromptOption, error) {
+    DebugPrint("Now attempting to load prompt files")
+    prompts := []PromptOption{}
+    prompt_dir := "prompts"
+    files, err := os.ReadDir(filepath.Join(GetBaseDir(), prompt_dir))
+    if err != nil {
+        abs_path, err := filepath.Abs(prompt_dir)
+        if err != nil {
+            fmt.Println("Could not read directory " + abs_path)
+            return nil, err
+        }
+        fmt.Printf("There was an issue trying to read the directory %s\n", abs_path)
+        return nil, err
+    }
+
+    for _, prompt_file := range files {
+        if prompt_file.Type().IsRegular() {
+            prompt_abs_path := filepath.Join(GetBaseDir(), prompt_dir, prompt_file.Name())
+            DebugPrint("Prompt file path being loaded: " + prompt_abs_path)
+
+            // Read the file content
+            file_content, err := os.ReadFile(prompt_abs_path)
+            if err != nil {
+                fmt.Printf("There was an issue attempting to open %s\n", prompt_abs_path)
+                continue // Skip to the next file if there's an error reading this one
+            }
+
+            // Initialize a new PromptOption for each file
+            var prompt_content PromptOption
+            err = json.Unmarshal(file_content, &prompt_content)
+            if err != nil {
+                fmt.Printf("There is a syntax issue with this JSON prompt file: %s\n", prompt_abs_path)
+                fmt.Println("Checking other files...")
+                continue // Skip to the next file if there's a JSON syntax issue
+            }
+
+            prompts = append(prompts, prompt_content)
+        }
+    }
+
+    return prompts, nil
+}
+
+func getPromptAliases(prompts []PromptOption) ([]string, error){
+    prompt_aliases:=[]string{}
+    for _, prompt := range prompts{
+        DebugPrint("Prompt alias found " + prompt.Alias)
+        if len(prompt.Alias) > 0{
+            prompt_aliases = append(prompt_aliases, prompt.Alias)
+        }
+    }
+    return prompt_aliases,nil
 }
 
 func ExecuteOpenAIUnixExplainQuery(api_key string,  options OpenAIBodyOptions, user_prompt string){
@@ -135,8 +250,6 @@ func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions, add_to_histo
         if add_to_history{
             WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), command, 700)
         }
-
-
 }
 
 func execute_command(command string)(string, string, error){
@@ -217,7 +330,6 @@ func GetOpenAIAPIKey() (string){
     return os.Getenv("OPENAI_API_KEY")
 }
 
-
 func last_command_in_history(file_name string) string {
     DebugPrint("checking last command");
     last_command:=""
@@ -258,7 +370,6 @@ func ShowHistory(){
     fmt.Println(string(content))
 }
 
-
 // util functions
 func GetBaseDir() string {
     file_executable_path, err := os.Executable()
@@ -271,18 +382,30 @@ func GetBaseDir() string {
 	return base_dir
 }
 
+func getStdinAsString() (string, error){
+    scanner := bufio.NewScanner(os.Stdin)
+    if scanner.Scan() {
+        input := scanner.Text()
+        return input, nil
+    }
+
+    if err := scanner.Err(); err != nil {
+        fmt.Println("Error reading from stdin:", err)
+        return "", nil
+    }
+    return "", nil
+}
 
 func StdinExist() bool{
     fi, err := os.Stdin.Stat()
     if err != nil {
         fmt.Println(err)
-        return false;
     }
-    if fi.Mode() & os.ModeNamedPipe == 0 {
-        return false
-    } else {
+    if fi.Mode()&os.ModeCharDevice == 0 {
+		DebugPrint("There is stdin input available.")
         return true
-    }
+	}
+    return false
 }
 
 func DebugPrint(msg string){
@@ -296,18 +419,23 @@ func DebugPrintf(msg string){
     }
 }
 
-
 //struct sections
-type OpenAIBodyOptions struct {
-    Model    string           `json:"model"`
-    Messages []OpenAIMessages `json:"messages"`
-    Temperature      float64 `json:"temperature"`
-    MaxTokens        int     `json:"max_tokens"`
-    TopP             float64 `json:"top_p"`
-    FrequencyPenalty float64 `json:"frequency_penalty"`
-    PresencePenalty  float64 `json:"presence_penalty"`
+type PromptOption struct {
+    OpenAIBodyOptions OpenAIBodyOptions `json:"openai_body_options"`
+    Alias             string            `json:"alias"`
+    ID                int16             `json:"id"`
+    PlaceholderType   string            `json:"placeholder_type"`
+    //FileABSPath       string
 }
-
+type OpenAIBodyOptions struct {
+    Model              string           `json:"model"`
+    Messages           []OpenAIMessages `json:"messages"`
+    Temperature        float64          `json:"temperature"`
+    MaxTokens          int              `json:"max_tokens"`
+    TopP               float64          `json:"top_p"`
+    FrequencyPenalty   float64          `json:"frequency_penalty"`
+    PresencePenalty    float64          `json:"presence_penalty"`
+}
 type OpenAIMessages struct {
     Role    string `json:"role"`
     Content string `json:"content"`
@@ -321,19 +449,16 @@ type ChatCompletion struct {
     Usage             Usage     `json:"usage"`
     SystemFingerprint *string   `json:"system_fingerprint"` // Use a pointer to handle null values
 }
-
 type Choice struct {
     Index        int      `json:"index"`
     Message      Message  `json:"message"`
     Logprobs     *string  `json:"logprobs"` // Use a pointer to handle null values
     FinishReason string   `json:"finish_reason"`
 }
-
 type Message struct {
     Role    string `json:"role"`
     Content string `json:"content"`
 }
-
 type Usage struct {
     PromptTokens     int `json:"prompt_tokens"`
     CompletionTokens int `json:"completion_tokens"`

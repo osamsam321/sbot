@@ -1,20 +1,25 @@
 {
-    "model": "gpt-4o-mini",
-    "model": "gpt-4o",
-    "messages": [
-        {
-            "role": "system",
-            "content": "You are an assistant and you answer any question the user asks"
-        },
-        {
-            "role": "user",
-            "content": ""
-        }
-    ],
-    "temperature":1,
-    "max_tokens":500,
-    "top_p":1,
-    "frequency_penalty":0.6,
-    "presence_penalty":0.8
+    "openai_body_options":{
+        "model": "gpt-4o",
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are an assistant and you answer any question the user asks"
+            },
+            {
+                "role": "user",
+                "content": ""
+            }
+        ],
+        "temperature":1,
+        "max_tokens":500,
+        "top_p":1,
+        "frequency_penalty":0.6,
+        "presence_penalty":0.8
+    },
+    "alias":"something else",
+    "id":4,
+    "placeholder_type":"{}"
+
 }
 
