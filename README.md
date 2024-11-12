@@ -11,6 +11,7 @@
   - [Shell Query](#basic-query)
   - [Shortcut Query](#shortcut-query)
   - [PIPE](#pipe)
+  - [Run Current Command](#run-current-command)
   - [Run Last Command from Local History](#run-last-command-from-local-history)
   - [Show Local History](#show-local-history)
   - [Enable Debug Mode](#enable-debug-mode)
@@ -94,6 +95,20 @@ You can still use the query option as a add on.
 ```sh
 echo "list files" | sbot -p nix -q " that have the word cat in the filename."
 ```
+### Run Current Command
+
+Run the last command that exists in the local sbot history file.
+
+**Usage**:
+```sh
+sbot -x
+```
+
+**Example**:
+```sh
+sbot -q "list files in sorted order" -p nix -x
+```
+
 
 ### Run Last Command from Local History
 

@@ -26,11 +26,14 @@ func InitFlags(){
     DebugPrint("starting init")
     DebugPrint("Base dir is " + GetBaseDir())
 
-    user_query:=                        flag.String("q", "", "add your query here")
+
+    execute_current_command :=          flag.Bool("x", false, "execute command")
+
+    execute_last_command :=             flag.Bool("l", false, "run last command that exist in the local sbot history file")
 
     user_selected_prompt:=              flag.String("p", "", "your prompt alias")
 
-    execute_last_command :=             flag.Bool("l", false, "run last command that exist in the local sbot history file")
+    user_query:=                        flag.String("q", "", "add your query here")
 
     show_history_command :=             flag.Bool("y", false, "show local history")
 
@@ -90,7 +93,14 @@ func InitFlags(){
                             os.Exit(1)
 
                         }
-                        SendOpenRouterPostRequest(GetAPIKey(), prompt.ChatRequestBody, true)
+                        api_response:=ExecuteOpenRouterRequest(GetAPIKey(), prompt.ChatRequestBody, true)
+                        api_content:=GetResponseContentOpenRouter(api_response)
+                        fmt.Println(api_content)
+                        WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_content, 700)
+                        if *execute_current_command{
+                            execute_command(api_content)
+                        }
+
                     }
                     if err!= nil{
                         fmt.Println("options are empty from site")
@@ -120,7 +130,13 @@ func InitFlags(){
                     fmt.Println("You are either missing the user field or user prompt is empty. Please fix your prompt. ")
                     os.Exit(1)
                 }
-                SendOpenRouterPostRequest(GetAPIKey(), prompt.ChatRequestBody, true)
+                api_response:=ExecuteOpenRouterRequest(GetAPIKey(), prompt.ChatRequestBody, true)
+                api_content:=GetResponseContentOpenRouter(api_response)
+                fmt.Println(api_content)
+                WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_content, 700)
+                if *execute_current_command{
+                    execute_command(api_content)
+                }
             }
         }else{
             fmt.Println("Please input the correct options.")
@@ -196,8 +212,11 @@ func getPromptAliases(prompts []PromptOption) ([]string, error){
     return prompt_aliases,nil
 }
 
-func SendOpenRouterPostRequest(api_key string, chat_request_body ChatRequestBody, add_to_history bool){
-
+func GetResponseContentOpenRouter(chat_completion_response ChatCompletion) string{
+    response_content:=chat_completion_response.Choices[0].Message.Content
+    return response_content
+}
+func ExecuteOpenRouterRequest(api_key string, chat_request_body ChatRequestBody, add_to_history bool) (ChatCompletion){
     post_body, err :=json.Marshal(chat_request_body)
     if err != nil{
         fmt.Println("could not encode json")
@@ -240,13 +259,9 @@ func SendOpenRouterPostRequest(api_key string, chat_request_body ChatRequestBody
         if err != nil{
             fmt.Println(err)
         }
-        command :=response_json.Choices[0].Message.Content
         DebugPrint("Status of request >> " + response.Status);
         DebugPrint("response from site >>" + string(response_bytes))
-        fmt.Println(command)
-        if add_to_history{
-            WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), command, 700)
-        }
+        return response_json
 }
 
 func execute_command(command string)(string, string, error){
