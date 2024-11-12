@@ -1,20 +1,19 @@
 
 # SBOT Tool Instructions
 
-The `sbot` tool is a command-line utility designed to work with ChatGPT. Below are the instructions on how to use the various commands available in `sbot`.
-
+The `sbot` tool is a command-line utility that integrates with OpenRouter.ai for chat completions. `sbot` works by utilizing prompt files stored in designated folders to configure chats with models available on OpenRouter.ai. There are four default prompts in the prompt folder, which you can use as templates to create your own. Below are instructions on how to use the various commands available in `sbot`.
 ## Table of Contents
+
 - [Set Your API Key](#set-your-api-key)
 - [Add an alias](#add-an-alias)
 - [Basic Usage](#basic-usage)
 - [Commands](#commands)
-  - [Basic nix Shell Query](#basic-nix-shell-query)
+  - [Shell Query](#basic-query)
+  - [Shortcut Query](#shortcut-query)
+  - [PIPE](#pipe)
   - [Run Last Command from Local History](#run-last-command-from-local-history)
   - [Show Local History](#show-local-history)
   - [Enable Debug Mode](#enable-debug-mode)
-  - [Explain a Command](#explain-a-command)
-  - [Ask a General GPT Question](#ask-a-general-gpt-question)
-  - [Filter or Combine Query with Stdin](#filter-or-combine-query-with-stdin)
   - [Help](#help)
 
 ## Install sbot
@@ -36,7 +35,7 @@ vi .env
 Optional. If you have a OPENAI_API_KEY env variable, you can run this command.
 
 ```
-sed -i "s/OPENAI_API_KEY=/OPENAI_API_KEY=$OPENAI_API_KEY/" .env
+sed -i "s/OPENROUTER_API_KEY=/OPENROUTER_API_KEY=$OPENROUTER_API_KEY/" .env
 ```
 ## Add an alias
 
@@ -57,21 +56,43 @@ sbot [options]
 
 ## Commands
 
+### Basic Query
 
-### Basic nix Shell Query
-
-Describe what you want to execute in your nix* shell and get a command back.
+Specifiy a prompt to use and add your query. Your query will be added inside of your placeholder and content defined in the prompts.
 
 **Usage**:
 ```sh
-sbot -q "<your query>"
+sbot -p <prompt-alias> -q "<your query>"
 ```
+
+**Example**:
+```sh
+sbot -p nix -q "find all files in my current directory that are txt or json files"
+sbot -p explain-nix -q "ls -ltrah"
+
+```
+### Shortcut Query
+
+You can run a query without a specified prompt alias. Sbot will automatically use the prompt with lowest ID found in your prompts. The nix prompt has the lowest by default
 
 **Example**:
 ```sh
 sbot -q "find all files in my current directory that are txt or json files"
 
+```
+### PIPE
 
+You can also pipe content.
+
+**Example**:
+```sh
+echo "how are you doing today?" | sbot -p general
+```
+You can still use the query option as a add on.
+
+**Example**:
+```sh
+echo "list files" | sbot -p nix -q " that have the word cat in the filename."
 ```
 
 ### Run Last Command from Local History
@@ -91,49 +112,6 @@ Show the local history of commands executed with `sbot`.
 ```sh
 sbot -y
 ```
-### Explain a Command
-
-Explain what a specific command does.
-
-**Usage**:
-```sh
-sbot -e <command>
-```
-
-**Example**:
-```sh
-sbot -e "ls -l"
-```
-
-### Ask a General GPT Question
-
-Ask a general question and get an answer from GPT.
-
-**Usage**:
-```sh
-sbot -g "<your question>"
-```
-
-**Example**:
-```sh
-sbot -g "What is the capital of France?"
-```
-
-### Filter or Combine Query with Stdin
-
-Filter or combine a query with stdin input.
-
-**Usage**:
-```sh
-sbot -i "<your query>"
-```
-
-**Example**:
-```sh
-echo "what is a popular alternative to pet cat?" | sbot -i "what is the history of this animal?"
-```
-
-
 
 ### Enable Debug Mode
 

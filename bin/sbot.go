@@ -24,6 +24,7 @@ func main() {
 
 func InitFlags(){
     DebugPrint("starting init")
+    DebugPrint("Base dir is " + GetBaseDir())
 
     user_query:=                        flag.String("q", "", "add your query here")
 
@@ -41,17 +42,13 @@ func InitFlags(){
         ShowHistory()
     }else if len(*user_query) > 0 || StdinExist(){
 
-            if len(*user_query) > 0 && StdinExist(){
-                fmt.Println("Cannot use stdin and query option at the same time")
-                os.Exit(1)
-            }
-
             if StdinExist(){
                 input, err := getStdinAsString()
                 if err != nil{
                     os.Exit(1)
                 }
-                user_query=&input
+                result:= input + *user_query
+                user_query=&result
             }
 
             prompts, err:= getAndLoadPrompts()
@@ -60,6 +57,7 @@ func InitFlags(){
                 fmt.Println("could not load any prompts. Exiting!")
                 os.Exit(1)
             }
+
             // start execution here now
 
             if len(*user_selected_prompt) > 0{
@@ -79,11 +77,11 @@ func InitFlags(){
                         }
                         DebugPrint("Aliases found and being used " + prompt.Alias)
                         // this will combine the initialial content field with the user prompt using the template type specfied in the prompt file
-                        for i, msg:=range prompt.OpenAIBodyOptions.Messages{
+                        for i, msg:=range prompt.ChatRequestBody.Messages{
                             if msg.Role=="user"{
                                starting_prompt=msg.Content
                                complete_prompt:=strings.ReplaceAll(starting_prompt, prompt.PlaceholderType, *user_query)
-                               prompt.OpenAIBodyOptions.Messages[i].Content=complete_prompt
+                               prompt.ChatRequestBody.Messages[i].Content=complete_prompt
                                DebugPrint("The complete prompt " + complete_prompt)
                             }
                         }
@@ -92,10 +90,10 @@ func InitFlags(){
                             os.Exit(1)
 
                         }
-                        SendOpenAIQuery(GetOpenAIAPIKey(), prompt.OpenAIBodyOptions, true)
+                        SendOpenRouterPostRequest(GetAPIKey(), prompt.ChatRequestBody, true)
                     }
                     if err!= nil{
-                        fmt.Println("openai options are empty ")
+                        fmt.Println("options are empty from site")
                     }
                 }
 
@@ -110,11 +108,11 @@ func InitFlags(){
                     }
                 }
                 DebugPrint("The select prompt alias is " + prompt.Alias)
-                for i, msg:=range prompt.OpenAIBodyOptions.Messages{
+                for i, msg:=range prompt.ChatRequestBody.Messages{
                     if msg.Role=="user"{
                         starting_prompt=msg.Content
                         complete_prompt:=strings.ReplaceAll(starting_prompt, prompt.PlaceholderType, *user_query)
-                        prompt.OpenAIBodyOptions.Messages[i].Content=complete_prompt
+                        prompt.ChatRequestBody.Messages[i].Content=complete_prompt
                         DebugPrint("The complete prompt " + complete_prompt)
                     }
                 }
@@ -122,7 +120,7 @@ func InitFlags(){
                     fmt.Println("You are either missing the user field or user prompt is empty. Please fix your prompt. ")
                     os.Exit(1)
                 }
-                SendOpenAIQuery(GetOpenAIAPIKey(), prompt.OpenAIBodyOptions, true)
+                SendOpenRouterPostRequest(GetAPIKey(), prompt.ChatRequestBody, true)
             }
         }else{
             fmt.Println("Please input the correct options.")
@@ -134,6 +132,7 @@ func printList(element []string){
         println(element)
     }
 }
+
 func getPromptFromAlias(prompts []PromptOption, prompt_alias string) (PromptOption, error){
     for _, prompt:= range prompts{
         if prompt.Alias == prompt_alias{
@@ -142,6 +141,7 @@ func getPromptFromAlias(prompts []PromptOption, prompt_alias string) (PromptOpti
     }
     return PromptOption{}, fmt.Errorf("Prompt type was not obtainable from prompt alias")
 }
+
 func getAndLoadPrompts() ([]PromptOption, error) {
     DebugPrint("Now attempting to load prompt files")
     prompts := []PromptOption{}
@@ -196,23 +196,17 @@ func getPromptAliases(prompts []PromptOption) ([]string, error){
     return prompt_aliases,nil
 }
 
-func ExecuteOpenAIUnixExplainQuery(api_key string,  options OpenAIBodyOptions, user_prompt string){
-    new_content:=options.Messages[1].Content + user_prompt
-    options.Messages[1].Content = new_content
-    SendOpenAIQuery(api_key, options, false)
-}
+func SendOpenRouterPostRequest(api_key string, chat_request_body ChatRequestBody, add_to_history bool){
 
-func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions, add_to_history bool){
-
-    post_body, err :=json.Marshal(openai_body)
+    post_body, err :=json.Marshal(chat_request_body)
     if err != nil{
         fmt.Println("could not encode json")
     }
 
     response_body := bytes.NewBuffer(post_body)
-    request, err:=http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", response_body)
+    request, err:=http.NewRequest("POST", "https://openrouter.ai/api/v1/chat/completions", response_body)
     if err != nil{
-        fmt.Println("An issue occured attempting to reach the openapi api url")
+        fmt.Println("An issue occured attempting to reach the api url")
     }
 
     request.Header.Add("Content-Type", "application/json")
@@ -220,18 +214,22 @@ func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions, add_to_histo
     client:=&http.Client{}
     response, error := client.Do(request)
     if error != nil{
-        fmt.Println("There was an error in openai response >> ", error);
+        fmt.Println("There was an error in the response >> ", error);
     }
     defer request.Body.Close()
 
         if response.StatusCode != 200{
-            fmt.Println()
-            fmt.Printf("There was an error from OPENAI. Status code is %d\n\n", response.StatusCode)
-            fmt.Printf("Please check your API key or any other common issues \n\n");
+            fmt.Printf("\nThere was an error from the response. Status code is %d\n\n", response.StatusCode)
+            fmt.Printf("Please check your API key or any other common issues \n\n")
+            responseBytes, err := io.ReadAll(response.Body)
+            if err != nil {
+                fmt.Println("Could not interpret the response data")
+            }
+            DebugPrint("Full error log from response body: " + string(responseBytes))
             os.Exit(1)
         }
-        response_bytes,err:= io.ReadAll(response.Body)
 
+        response_bytes,err:= io.ReadAll(response.Body)
         if err != nil{
             fmt.Println("could not interprit the response data")
         }
@@ -244,8 +242,7 @@ func SendOpenAIQuery(api_key string, openai_body OpenAIBodyOptions, add_to_histo
         }
         command :=response_json.Choices[0].Message.Content
         DebugPrint("Status of request >> " + response.Status);
-        DebugPrint("response from openai >>" + string(response_bytes))
-
+        DebugPrint("response from site >>" + string(response_bytes))
         fmt.Println(command)
         if add_to_history{
             WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), command, 700)
@@ -304,30 +301,14 @@ func execute_command(command string)(string, string, error){
     }
     return stdout.String(), stderr.String(), err
 }
-// getting stuff from files
-func GetOpenAIAPIBodyOptions(file_path string) (OpenAIBodyOptions, error){
-    file_content,err := os.ReadFile(file_path)
-    if(err != nil){
-        fmt.Print("An error came up reading the file ", file_path, err);
-    }
-    //json_value, err :=json.Marshal(file_content)
-    var open_ai_options OpenAIBodyOptions
 
-    if err := json.Unmarshal(file_content, &open_ai_options); err != nil{
-        fmt.Println("could not encode json "  )
-        //return OpenAIBodyOptions{}, fmt.Errorf("could not Unmarshal json")
-    }
-
-    return open_ai_options, nil
-}
-
-func GetOpenAIAPIKey() (string){
+func GetAPIKey() (string){
     err := godotenv.Load(filepath.Join(GetBaseDir(),".env"))
-
+    DebugPrint("grabbing api key from " + filepath.Join(GetBaseDir(), ".env"))
     if err != nil{
         fmt.Println("Error loading .env file")
     }
-    return os.Getenv("OPENAI_API_KEY")
+    return os.Getenv("OPENROUTER_API_KEY")
 }
 
 func last_command_in_history(file_name string) string {
@@ -371,6 +352,7 @@ func ShowHistory(){
 }
 
 // util functions
+
 func GetBaseDir() string {
     file_executable_path, err := os.Executable()
     bin_dir := filepath.Dir(file_executable_path)
@@ -378,7 +360,6 @@ func GetBaseDir() string {
         fmt.Println(err)
 	}
     base_dir := filepath.Dir(bin_dir)
-    DebugPrint("base dir is " + base_dir )
 	return base_dir
 }
 
@@ -420,23 +401,23 @@ func DebugPrintf(msg string){
 }
 
 //struct sections
+
 type PromptOption struct {
-    OpenAIBodyOptions OpenAIBodyOptions `json:"openai_body_options"`
+    ChatRequestBody   ChatRequestBody   `json:"chat_request_body"`
     Alias             string            `json:"alias"`
     ID                int16             `json:"id"`
     PlaceholderType   string            `json:"placeholder_type"`
-    //FileABSPath       string
 }
-type OpenAIBodyOptions struct {
+type ChatRequestBody struct {
     Model              string           `json:"model"`
-    Messages           []OpenAIMessages `json:"messages"`
+    Messages           []ChatAIMessages `json:"messages"`
     Temperature        float64          `json:"temperature"`
     MaxTokens          int              `json:"max_tokens"`
     TopP               float64          `json:"top_p"`
     FrequencyPenalty   float64          `json:"frequency_penalty"`
     PresencePenalty    float64          `json:"presence_penalty"`
 }
-type OpenAIMessages struct {
+type ChatAIMessages struct {
     Role    string `json:"role"`
     Content string `json:"content"`
 }
@@ -466,7 +447,7 @@ type Usage struct {
 }
 type CommonSettings struct{
     AllowDangerousCommands bool     `json:"allow_dangerous_commands"`
-    Shell string                    `json:"shell"`
+    Shell                  string   `json:"shell"`
     DangerousCommands      []string `json:"dangerous_commands"`
 }
 
