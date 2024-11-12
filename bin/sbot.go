@@ -67,7 +67,7 @@ func InitFlags(){
                 prompt_aliases:= []string{}
                 prompt_aliases,err=getPromptAliases(prompts)
                 if len(prompt_aliases) <= 0{
-                    println("you have no prompts in the prompt folder. ")
+                    fmt.Println("you have no prompts in the prompt folder. ")
                     os.Exit(1)
                 }
                 if len(prompt_aliases) > 0 {
@@ -75,7 +75,7 @@ func InitFlags(){
                         //filepath, err:= getABSPathFromAlias(prompts, prompt_alias)
                         prompt, err:=getPromptFromAlias(prompts, *user_selected_prompt)
                         if err != nil{
-                            println("Unable to get prompt. Exiting!")
+                            fmt.Println("Unable to get prompt. Exiting!")
                             os.Exit(1)
                         }
                         DebugPrint("Aliases found and being used " + prompt.Alias)
@@ -94,13 +94,19 @@ func InitFlags(){
 
                         }
                         api_response:=ExecuteOpenRouterRequest(GetAPIKey(), prompt.ChatRequestBody, true)
-                        api_content:=GetResponseContentOpenRouter(api_response)
-                        fmt.Println(api_content)
-                        WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_content, 700)
-                        if *execute_current_command{
-                            execute_command(api_content)
-                        }
 
+                        if  api_response.Error != nil && api_response.Error.Code != 200{
+                            DebugPrint("api message error code: " + string(api_response.Error.Code ))
+                            fmt.Println("Could not execute command. The API site returned the following message")
+                            fmt.Println(api_response.Error.Metadata.Raw)
+                        }else{
+                            api_msg_content:=api_response.Choices[0].Message.Content
+                            fmt.Println(api_msg_content)
+                            WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_msg_content, 700)
+                            if *execute_current_command{
+                                execute_command(api_msg_content)
+                            }
+                        }
                     }
                     if err!= nil{
                         fmt.Println("options are empty from site")
@@ -131,11 +137,18 @@ func InitFlags(){
                     os.Exit(1)
                 }
                 api_response:=ExecuteOpenRouterRequest(GetAPIKey(), prompt.ChatRequestBody, true)
-                api_content:=GetResponseContentOpenRouter(api_response)
-                fmt.Println(api_content)
-                WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_content, 700)
-                if *execute_current_command{
-                    execute_command(api_content)
+
+                if  api_response.Error != nil && api_response.Error.Code!= 200{
+                    DebugPrint("api message error code: " + string(api_response.Error.Code ))
+                    fmt.Println("Could not execute command. The API site returned the following message")
+                    fmt.Println(api_response.Error.Metadata.Raw)
+                }else{
+                    api_msg_content:=api_response.Choices[0].Message.Content
+                    fmt.Println(api_msg_content)
+                    WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_msg_content, 700)
+                    if *execute_current_command{
+                        execute_command(api_msg_content)
+                    }
                 }
             }
         }else{
@@ -145,7 +158,7 @@ func InitFlags(){
 
 func printList(element []string){
     for _, element:=range element{
-        println(element)
+        fmt.Println(element)
     }
 }
 
@@ -212,10 +225,6 @@ func getPromptAliases(prompts []PromptOption) ([]string, error){
     return prompt_aliases,nil
 }
 
-func GetResponseContentOpenRouter(chat_completion_response ChatCompletion) string{
-    response_content:=chat_completion_response.Choices[0].Message.Content
-    return response_content
-}
 func ExecuteOpenRouterRequest(api_key string, chat_request_body ChatRequestBody, add_to_history bool) (ChatCompletion){
     post_body, err :=json.Marshal(chat_request_body)
     if err != nil{
@@ -304,7 +313,7 @@ func execute_command(command string)(string, string, error){
     cmd :=exec.Command(shell_to_use, "-c", command)
     cmd.Stdout = &stdout
     cmd.Stderr = &stderr
-    fmt.Println("Command to execute >>> " + cmd.String())
+    DebugPrint("Command to execute >>> " + cmd.String())
     err = cmd.Run()
     if err != nil{
         fmt.Print("An error occured >>> ")
@@ -349,7 +358,7 @@ func WriteAppendToLocalCommandHistory(file_name string, content_passed string, p
     content_from_file, err:=os.ReadFile(file_name)
     space:= "\n"
     if err != nil{
-        println("could read not read from the history file. Please see if it exists")
+       fmt.Println("could read not read from the history file. Please see if it exists")
     }
     if(len(content_from_file) <= 0){
         space=""
@@ -442,6 +451,7 @@ type ChatCompletion struct {
     Created           int64     `json:"created"`
     Model             string    `json:"model"`
     Choices           []Choice  `json:"choices"`
+    Error             *Error     `json:"error"`
     Usage             Usage     `json:"usage"`
     SystemFingerprint *string   `json:"system_fingerprint"` // Use a pointer to handle null values
 }
@@ -451,6 +461,11 @@ type Choice struct {
     Logprobs     *string  `json:"logprobs"` // Use a pointer to handle null values
     FinishReason string   `json:"finish_reason"`
 }
+type Error struct {
+    Code    int       `json:"code"`
+    Message string    `json:"message"`
+    Metadata Metadata `json:"metadata"`
+}
 type Message struct {
     Role    string `json:"role"`
     Content string `json:"content"`
@@ -459,6 +474,10 @@ type Usage struct {
     PromptTokens     int `json:"prompt_tokens"`
     CompletionTokens int `json:"completion_tokens"`
     TotalTokens      int `json:"total_tokens"`
+}
+type Metadata struct {
+	Raw          string `json:"raw"`
+	ProviderName string `json:"provider_name"`
 }
 type CommonSettings struct{
     AllowDangerousCommands bool     `json:"allow_dangerous_commands"`
