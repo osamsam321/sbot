@@ -97,7 +97,7 @@ func InitFlags(){
 
                         if  api_response.Error != nil && api_response.Error.Code != 200{
                             DebugPrint("api message error code: " + string(api_response.Error.Code ))
-                            fmt.Println("Could not execute command. The API site returned the following message")
+                            fmt.Println("Could not execute command. The API site returned the following message:")
                             fmt.Println(api_response.Error.Metadata.Raw)
                         }else{
                             api_msg_content:=api_response.Choices[0].Message.Content
@@ -140,7 +140,7 @@ func InitFlags(){
 
                 if  api_response.Error != nil && api_response.Error.Code!= 200{
                     DebugPrint("api message error code: " + string(api_response.Error.Code ))
-                    fmt.Println("Could not execute command. The API site returned the following message")
+                    fmt.Println("Could not execute command. The API site returned the following message: ")
                     fmt.Println(api_response.Error.Metadata.Raw)
                 }else{
                     api_msg_content:=api_response.Choices[0].Message.Content
