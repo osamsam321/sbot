@@ -33,7 +33,7 @@ Set your API Key in the .env file and use a editor to add the key
 vi .env
 ```
 
-Optional. If you have a OPENAI_API_KEY env variable, you can run this command.
+Optional. If you have a OPENROUTER_API_KEY env variable, you can run this command.
 
 ```
 sed -i "s/OPENROUTER_API_KEY=/OPENROUTER_API_KEY=$OPENROUTER_API_KEY/" .env
