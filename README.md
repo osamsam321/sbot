@@ -23,7 +23,7 @@ curl -sSL https://raw.githubusercontent.com/osamsam321/sbot/refs/heads/main/inst
 ```
 
 ## Set Your API Key
-Create the .env file in the root of the project if it doesn't exist.
+Create a [OpenRouter key](https://openrouter.ai/settings/keys) and Create the .env file in the root of the project if it doesn't exist.
 ```
 cd ~/.sbot
 ```
