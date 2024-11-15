@@ -16,7 +16,7 @@ BINARY=../$(DEST_DIR)/bin/sbot
 all: build
 
 # Build the Go project
-build:
+build: clean
 	@echo "Started build."
 	@mkdir -p $(DEST_DIR)
 	@cp -r $(PROMPTS_SRC) $(DEST_DIR)

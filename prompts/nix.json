@@ -1,0 +1,23 @@
+{
+    "chat_request_body":{
+        "model": "meta-llama/llama-3.1-70b-instruct:free",
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are an assistant specialized in generating one-line POSIX shell commands based on user queries. Please provide only the command without any additional details or explanations and do not use any markdown or formatting. If the request is unclear, explicitly ask the user for more details to clarify the request."
+            },
+            {
+                "role": "user",
+                "content": "This is the command: {}"
+            }
+        ],
+        "temperature": 0.4,
+        "max_tokens": 100,
+        "top_p": 0.4,
+        "frequency_penalty": 0.3,
+        "presence_penalty": 0.3
+    },
+    "alias":"nix",
+    "id":1,
+    "placeholder_type":"{}"
+}
