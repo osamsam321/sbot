@@ -59,17 +59,17 @@ sbot [options]
 
 ### Basic Query
 
-Specifiy a prompt to use and add your query. Your query will be added inside of your placeholder and content defined in the prompts.
+Specifiy a chat template to use and add your query. Your query will be added inside of your placeholder and content defined in the prompts.
 
 **Usage**:
 ```sh
-sbot -p <prompt-alias> -q "<your query>"
+sbot -t <chat template> -q "<your query>"
 ```
 
 **Example**:
 ```sh
-sbot -p nix -q "find all files in my current directory that are txt or json files"
-sbot -p explain-nix -q "ls -ltrah"
+sbot -t nix -q "find all files in my current directory that are txt or json files"
+sbot -t explain-nix -q "ls -ltrah"
 
 ```
 ### Shortcut Query
@@ -87,13 +87,13 @@ You can also pipe content.
 
 **Example**:
 ```sh
-echo "how are you doing today?" | sbot -p general
+echo "how are you doing today?" | sbot -t general
 ```
 You can still use the query option as a add on.
 
 **Example**:
 ```sh
-echo "list files" | sbot -p nix -q " that have the word cat in the filename."
+echo "list files" | sbot -t nix -q " that have the word cat in the filename."
 ```
 ### Run Current Command
 
@@ -106,7 +106,7 @@ sbot -x
 
 **Example**:
 ```sh
-sbot -q "list files in sorted order" -p nix -x
+sbot -q "list files in sorted order" -t nix -x
 ```
 
 
