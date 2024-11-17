@@ -135,7 +135,7 @@ Show the local history of commands executed with `sbot`.
 
 **Usage**:
 ```sh
-sbot -y
+sbot -a
 ```
 
 ### Enable Debug Mode
