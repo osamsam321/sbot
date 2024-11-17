@@ -74,7 +74,7 @@ sbot -t explain-nix -q "ls -ltrah"
 ```
 ### Shortcut Query
 
-You can run a query without a specified chat template name. Sbot will automatically use a chat template specified in the settings.json file. The nix prompt has the lowest by default
+You can run a query without a specified chat template name. Sbot will automatically use a chat template specified in the settings.json file. The nix chat template is enabled by default. 
 
 **Example**:
 ```sh
