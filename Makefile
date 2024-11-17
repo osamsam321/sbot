@@ -1,13 +1,14 @@
 DEST_DIR=target/sbot
 SRC_BIN=bin
-PROMPTS_SRC=prompts
+CHAT_TEMPLATES_SRC=chat_templates
 COMMAND_HISTORY=sbot_command_history.txt
 SETTING_SRC=setting.json
 ENV.EXAMPLE=.env.example
 APP_VERSION := $(shell cat VERSION)
 ENV=.env
 
-BINARY=../$(DEST_DIR)/bin/sbot
+BINARYS=../$(DEST_DIR)/bin/.
+APP_NAME=sbot
 
 # Phony targets (not real files)
 .PHONY: all build clean
@@ -19,19 +20,19 @@ all: build
 build: clean
 	@echo "Started build."
 	@mkdir -p $(DEST_DIR)
-	@cp -r $(PROMPTS_SRC) $(DEST_DIR)
+	@cp -r $(CHAT_TEMPLATES_SRC) $(DEST_DIR)
 	@cp $(SETTING_SRC) $(DEST_DIR)
 	@touch $(DEST_DIR)/$(COMMAND_HISTORY)
 	@cp $(ENV.EXAMPLE) $(DEST_DIR)/$(ENV)
-	@cd $(SRC_BIN) && go build -o $(BINARY)
+	@cd $(SRC_BIN) && go build -o $(BINARYS)/$(APP_NAME)
 	@find target -type f -exec chmod 700 {} + && find target -type d -exec chmod 700 {} +
 	@echo "build complete."
 
 # Clean up build artifacts
 clean:
 	@echo "Cleaning up..."
-	@rm -f $(BINARY)
-	@rm -rf $(DEST_DIR)/$(PROMPTS_SRC)
+	@rm -f $(BINARYS)
+	@rm -rf $(DEST_DIR)/$(CHAT_TEMPLATES_SRC)
 	@rm -f $(DEST_DIR)/$(SETTING_SRC)
 	@rm -f $(DEST_DIR)/$(COMMAND_HISTORY)
 	@rm -f $(DEST_DIR)/$(ENV)

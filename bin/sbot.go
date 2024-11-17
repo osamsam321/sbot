@@ -2,290 +2,162 @@ package main
 
 import (
 	"bytes"
-    "bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
-	"slices"
 	"strings"
-	"github.com/joho/godotenv"
 )
 
-var debug_enabled = flag.Bool("d", false, "enable debug mode")
+var debug_enabled =                    flag.Bool("d", false, "enable debug mode")
+var execute_current_command =          flag.Bool("x", false, "execute command")
+var execute_last_command =             flag.Bool("l", false, "run last command that exist in the local sbot history file")
+var selected_chat_template_name=       flag.String("t", "", "your chat template name")
+var user_query=                        flag.String("q", "", "add your query here")
+var show_history_command =             flag.Bool("y", false, "show local history")
+var all_chat_template_names =          flag.Bool("a", false, "list all chat template names")
 
 func main() {
-    InitFlags()
+    handleFlags()
 }
 
-func InitFlags(){
-    DebugPrint("starting init")
-    DebugPrint("Base dir is " + GetBaseDir())
-
-
-    execute_current_command :=          flag.Bool("x", false, "execute command")
-
-    execute_last_command :=             flag.Bool("l", false, "run last command that exist in the local sbot history file")
-
-    user_selected_prompt:=              flag.String("p", "", "your prompt alias")
-
-    user_query:=                        flag.String("q", "", "add your query here")
-
-    show_history_command :=             flag.Bool("y", false, "show local history")
+func handleFlags(){
+    DebugPrintln("starting init", InfoLog)
+    DebugPrintln("Base dir is " + GetBaseDir(), InfoLog)
 
     flag.Parse()
 
     if(*execute_last_command){
-        execute_command(last_command_in_history(filepath.Join(GetBaseDir(), "sbot_command_history.txt")))
+        executeCommand(lastCommandInHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt")))
     }else if *show_history_command{
-        ShowHistory()
+        showHistory()
+    }else if *all_chat_template_names{
+        listChatTemplateNames()
     }else if len(*user_query) > 0 || StdinExist(){
 
             if StdinExist(){
-                input, err := getStdinAsString()
+                DebugPrintln("Stdin found", InfoLog)
+                input, err := GetStdinAsString()
                 if err != nil{
+                    fmt.Println("There was an issue collecting standard input.")
                     os.Exit(1)
                 }
                 result:= input + *user_query
                 user_query=&result
             }
+            handleUserQuery(user_query)
+    }else{
+        fmt.Println("Please input the correct options.")
+    }
+}
 
-            prompts, err:= getAndLoadPrompts()
-            starting_prompt:=""
-            if err != nil{
-                fmt.Println("could not load any prompts. Exiting!")
-                os.Exit(1)
-            }
+func handleUserQuery(user_query *string){
+    chat_templates, err:= getAndLoadChatTemplates()
+    starting_prompt:=""
+    if err != nil{
+        fmt.Println("could not load any prompts. Exiting!")
+        os.Exit(1)
+    }
+    // start execution here now
 
-            // start execution here now
-
-            if len(*user_selected_prompt) > 0{
-                prompt_aliases:= []string{}
-                prompt_aliases,err=getPromptAliases(prompts)
-                if len(prompt_aliases) <= 0{
-                    fmt.Println("you have no prompts in the prompt folder. ")
+    if len(*selected_chat_template_name) > 0{
+        chat_template_names:= []string{}
+        chat_template_names,err=getChatTemplatename(chat_templates)
+        if err != nil{
+            fmt.Println("you have no chat template in the chat_template folder. ")
+            os.Exit(1)
+        }
+        if len(chat_template_names) > 0 {
+                chat_template, err:=getChatTemplateFromName(chat_templates, *selected_chat_template_name)
+                if err != nil{
+                    fmt.Println(err)
                     os.Exit(1)
                 }
-                if len(prompt_aliases) > 0 {
-                    if(slices.Contains(prompt_aliases, *user_selected_prompt)){
-                        //filepath, err:= getABSPathFromAlias(prompts, prompt_alias)
-                        prompt, err:=getPromptFromAlias(prompts, *user_selected_prompt)
-                        if err != nil{
-                            fmt.Println("Unable to get prompt. Exiting!")
-                            os.Exit(1)
-                        }
-                        DebugPrint("Aliases found and being used " + prompt.Alias)
-                        // this will combine the initialial content field with the user prompt using the template type specfied in the prompt file
-                        for i, msg:=range prompt.ChatRequestBody.Messages{
-                            if msg.Role=="user"{
-                               starting_prompt=msg.Content
-                               complete_prompt:=strings.ReplaceAll(starting_prompt, prompt.PlaceholderType, *user_query)
-                               prompt.ChatRequestBody.Messages[i].Content=complete_prompt
-                               DebugPrint("The complete prompt " + complete_prompt)
-                            }
-                        }
-                        if starting_prompt == ""{
-                            fmt.Println("You are either missing the user field or user prompt is empty. Please fix your prompt. ")
-                            os.Exit(1)
-
-                        }
-                        api_response:=ExecuteOpenRouterRequest(GetAPIKey(), prompt.ChatRequestBody, true)
-
-                        if  api_response.Error != nil && api_response.Error.Code != 200{
-                            DebugPrint("api message error code: " + string(api_response.Error.Code ))
-                            fmt.Println("Could not execute command. The API site returned the following message:")
-                            fmt.Println(api_response.Error.Metadata.Raw)
-                        }else{
-                            api_msg_content:=api_response.Choices[0].Message.Content
-                            fmt.Println(api_msg_content)
-                            WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_msg_content, 700)
-                            if *execute_current_command{
-                                execute_command(api_msg_content)
-                            }
-                        }
-                    }
-                    if err!= nil{
-                        fmt.Println("options are empty from site")
-                    }
-                }
-
-            }else{
-                DebugPrint("Prompt option not supplied. Using default prompt by selecting the prompt with the lowest id value")
-                prompt:=PromptOption{}
-                smallest_val:=prompts[0].ID;
-                for _, p := range prompts{
-                    if p.ID <= smallest_val{
-                       DebugPrint("prompt id " + string(p.ID))
-                       prompt = p
-                    }
-                }
-                DebugPrint("The select prompt alias is " + prompt.Alias)
-                for i, msg:=range prompt.ChatRequestBody.Messages{
+                DebugPrintln("names found and being used " + chat_template.Name, InfoLog)
+                // this will combine the initialial content field with the user prompt using the template type specfied in the chat template file
+                for i, msg:=range chat_template.ChatRequestBody.Messages{
                     if msg.Role=="user"{
-                        starting_prompt=msg.Content
-                        complete_prompt:=strings.ReplaceAll(starting_prompt, prompt.PlaceholderType, *user_query)
-                        prompt.ChatRequestBody.Messages[i].Content=complete_prompt
-                        DebugPrint("The complete prompt " + complete_prompt)
+                       starting_prompt=msg.Content
+                       complete_prompt:=strings.ReplaceAll(starting_prompt, chat_template.PlaceholderType, *user_query)
+                       chat_template.ChatRequestBody.Messages[i].Content=complete_prompt
+                       DebugPrintln("The complete prompt " + complete_prompt, InfoLog)
                     }
                 }
                 if starting_prompt == ""{
-                    fmt.Println("You are either missing the user field or user prompt is empty. Please fix your prompt. ")
+                    fmt.Println("You are either missing the user field or user prompt is empty. Please fix your chat template prompt. ")
                     os.Exit(1)
                 }
-                api_response:=ExecuteOpenRouterRequest(GetAPIKey(), prompt.ChatRequestBody, true)
+                api_response := ExecuteOpenRouterRequest(GetAPIKey("OPENROUTER_API_KEY"), chat_template.ChatRequestBody)
 
-                if  api_response.Error != nil && api_response.Error.Code!= 200{
-                    DebugPrint("api message error code: " + string(api_response.Error.Code ))
-                    fmt.Println("Could not execute command. The API site returned the following message: ")
+                if  api_response.Error != nil && api_response.Error.Code != 200{
+                    DebugPrintln("api message error code: " + string(api_response.Error.Code ), InfoLog)
+                    fmt.Println("Could not execute command. The API site returned the following message: \n")
                     fmt.Println(api_response.Error.Metadata.Raw)
                 }else{
                     api_msg_content:=api_response.Choices[0].Message.Content
                     fmt.Println(api_msg_content)
-                    WriteAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_msg_content, 700)
+                    writeAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_msg_content, 700)
                     if *execute_current_command{
-                        execute_command(api_msg_content)
+                        executeCommand(api_msg_content)
                     }
                 }
+            if err!= nil{
+                fmt.Println("options are empty from site")
             }
-        }else{
-            fmt.Println("Please input the correct options.")
         }
-}
 
-func printList(element []string){
-    for _, element:=range element{
-        fmt.Println(element)
-    }
-}
-
-func getPromptFromAlias(prompts []PromptOption, prompt_alias string) (PromptOption, error){
-    for _, prompt:= range prompts{
-        if prompt.Alias == prompt_alias{
-            return prompt, nil
+    }else{
+        DebugPrintln("Prompt option not supplied. Using default chat template body found in setting.json", InfoLog)
+        commonSettings, err:=getCommonSettingsConfig("setting.json")
+        if err != nil{
+            fmt.Println("could not open setting file")
+            os.Exit(0)
         }
-    }
-    return PromptOption{}, fmt.Errorf("Prompt type was not obtainable from prompt alias")
-}
-
-func getAndLoadPrompts() ([]PromptOption, error) {
-    DebugPrint("Now attempting to load prompt files")
-    prompts := []PromptOption{}
-    prompt_dir := "prompts"
-    files, err := os.ReadDir(filepath.Join(GetBaseDir(), prompt_dir))
-    if err != nil {
-        abs_path, err := filepath.Abs(prompt_dir)
+        chat_template, err := getChatTemplateFromName(chat_templates, commonSettings.DefaultChatTemplate)
         if err != nil {
-            fmt.Println("Could not read directory " + abs_path)
-            return nil, err
-        }
-        fmt.Printf("There was an issue trying to read the directory %s\n", abs_path)
-        return nil, err
-    }
-
-    for _, prompt_file := range files {
-        if prompt_file.Type().IsRegular() {
-            prompt_abs_path := filepath.Join(GetBaseDir(), prompt_dir, prompt_file.Name())
-            DebugPrint("Prompt file path being loaded: " + prompt_abs_path)
-
-            // Read the file content
-            file_content, err := os.ReadFile(prompt_abs_path)
-            if err != nil {
-                fmt.Printf("There was an issue attempting to open %s\n", prompt_abs_path)
-                continue // Skip to the next file if there's an error reading this one
-            }
-
-            // Initialize a new PromptOption for each file
-            var prompt_content PromptOption
-            err = json.Unmarshal(file_content, &prompt_content)
-            if err != nil {
-                fmt.Printf("There is a syntax issue with this JSON prompt file: %s\n", prompt_abs_path)
-                fmt.Println("Checking other files...")
-                continue // Skip to the next file if there's a JSON syntax issue
-            }
-
-            prompts = append(prompts, prompt_content)
-        }
-    }
-
-    return prompts, nil
-}
-
-func getPromptAliases(prompts []PromptOption) ([]string, error){
-    prompt_aliases:=[]string{}
-    for _, prompt := range prompts{
-        DebugPrint("Prompt alias found " + prompt.Alias)
-        if len(prompt.Alias) > 0{
-            prompt_aliases = append(prompt_aliases, prompt.Alias)
-        }
-    }
-    return prompt_aliases,nil
-}
-
-func ExecuteOpenRouterRequest(api_key string, chat_request_body ChatRequestBody, add_to_history bool) (ChatCompletion){
-    post_body, err :=json.Marshal(chat_request_body)
-    if err != nil{
-        fmt.Println("could not encode json")
-    }
-
-    response_body := bytes.NewBuffer(post_body)
-    request, err:=http.NewRequest("POST", "https://openrouter.ai/api/v1/chat/completions", response_body)
-    if err != nil{
-        fmt.Println("An issue occured attempting to reach the api url")
-    }
-
-    request.Header.Add("Content-Type", "application/json")
-    request.Header.Add("Authorization", "Bearer " + api_key)
-    client:=&http.Client{}
-    response, error := client.Do(request)
-    if error != nil{
-        fmt.Println("There was an error in the response >> ", error);
-    }
-    defer request.Body.Close()
-
-        if response.StatusCode != 200{
-            fmt.Printf("\nThere was an error from the response. Status code is %d\n\n", response.StatusCode)
-            fmt.Printf("Please check your API key or any other common issues \n\n")
-            responseBytes, err := io.ReadAll(response.Body)
-            if err != nil {
-                fmt.Println("Could not interpret the response data")
-            }
-            DebugPrint("Full error log from response body: " + string(responseBytes))
+            fmt.Print(err)
+            fmt.Print(" or valid in your settings.json file")
             os.Exit(1)
         }
-
-        response_bytes,err:= io.ReadAll(response.Body)
-        if err != nil{
-            fmt.Println("could not interprit the response data")
+        DebugPrintln("The select chat template name is " + chat_template.Name, InfoLog)
+        for i, msg:=range chat_template.ChatRequestBody.Messages{
+            if msg.Role=="user"{
+                starting_prompt=msg.Content
+                complete_prompt:=strings.ReplaceAll(starting_prompt, chat_template.PlaceholderType, *user_query)
+                chat_template.ChatRequestBody.Messages[i].Content=complete_prompt
+                DebugPrintln("The complete prompt " + complete_prompt, InfoLog)
+            }
         }
-
-        var response_json ChatCompletion
-        err = json.Unmarshal(response_bytes, &response_json)
-
-        if err != nil{
-            fmt.Println(err)
+        if starting_prompt == ""{
+            fmt.Println("You are either missing the user field or user prompt is empty. Please fix your prompt. ")
+            os.Exit(1)
         }
-        DebugPrint("Status of request >> " + response.Status);
-        DebugPrint("response from site >>" + string(response_bytes))
-        return response_json
+        api_response:=ExecuteOpenRouterRequest(GetAPIKey("OPENROUTER_API_KEY"), chat_template.ChatRequestBody)
+
+        if  api_response.Error != nil && api_response.Error.Code!= 200{
+            DebugPrintln("api message error code: " + string(api_response.Error.Code ), WarningLog)
+            fmt.Println("Could not execute command. The API site returned the following message: \n")
+            fmt.Println(api_response.Error.Metadata.Raw)
+        }else{
+            api_msg_content:=api_response.Choices[0].Message.Content
+            fmt.Println(api_msg_content)
+            writeAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_msg_content, 700)
+            if *execute_current_command{
+                executeCommand(api_msg_content)
+            }
+        }
+    }
+
 }
 
-func execute_command(command string)(string, string, error){
+// functions in alphabetical order
+
+func executeCommand(command string)(string, string, error){
     //!TODO sanitize any special chracters
     //re := regexp.MustCompile(`^[a-zA-Z0-9\s\.\|\'\"\-\/\_]+$`)
-    settings_file_content,err:=os.ReadFile(filepath.Join(GetBaseDir(), "setting.json"))
-    if err != nil{
-        fmt.Println(err)
-    }
-
-    var common_settings CommonSettings
-    err=json.Unmarshal(settings_file_content, &common_settings )
-    if err != nil{
-        fmt.Println(err)
-    }
     // Check if the command matches the allowed pattern
     // read from settings file and unmarshal as shown
     // TODO! Check for the matching characters
@@ -293,72 +165,188 @@ func execute_command(command string)(string, string, error){
    //     fmt.Println("command contains dangerous special characters ")
    //     return "", "", nil
    // }
+    common_settings,err := getCommonSettingsConfig("setting.json")
+    if err != nil{
+        fmt.Println("could not open settings file")
+        os.Exit(0)
+    }
 
+    var commandStringOption []string
+    shellToUse := strings.ToLower(common_settings.Shell)
+    shellBaseName:= path.Base(shellToUse)
+    if MatchesAny(shellBaseName, []string{"bash","ksh", "fish", "sh", "zsh"}) {
+        commandStringOption=[]string{"-c"}
+    }else if MatchesAny(shellBaseName, []string{"cmd"}) {
+        commandStringOption=[]string{"/C"}
+    }else if MatchesAny(shellBaseName, []string{"nushell"}) {
+        commandStringOption=[]string{"-e"}
+    }else if MatchesAny(shellBaseName, []string{"powershell", "pwsh"}){
+        commandStringOption=[]string{"-Command"}
+    }else{
+        fmt.Println("The shell type provided in setting.json is unknown or not supported in sbot")
+        os.Exit(1)
+    }
+    DebugPrintln("Using the following command string option " + commandStringOption[0], InfoLog)
     dangerous_commands:= common_settings.DangerousCommands
     if !common_settings.AllowDangerousCommands{
         for i:=0;i< len(dangerous_commands);i++ {
-           if strings.Contains(command, dangerous_commands[i]) {
-               DebugPrint("command: " + command + " dangerous command: " + dangerous_commands[i] + " i " + string(i))
+           if strings.Contains(command, dangerous_commands[i])    ||
+              strings.Contains(shellToUse, dangerous_commands[i]) ||
+              strings.Contains(commandStringOption[0], dangerous_commands[i]) {
+
+               DebugPrintln("command: " + command + " dangerous command: " + dangerous_commands[i] + " i " + string(i), WarningLog)
                fmt.Println("your command is a 'Dangerous command type'. Please enable this in the setting file or try a different command")
                return "", "", nil
            }
         }
     }
 
-    // now execute command
-    shell_to_use := common_settings.Shell
     var stdout bytes.Buffer
     var stderr bytes.Buffer
-    DebugPrint("going to run the command with the follow components " + shell_to_use + " " + "-c " + command)
-    cmd :=exec.Command(shell_to_use, "-c", command)
-    cmd.Stdout = &stdout
-    cmd.Stderr = &stderr
-    DebugPrint("Command to execute >>> " + cmd.String())
+    DebugPrintln("going to run the command with the follow components " + shellToUse + " " + commandStringOption[0] + " " + command, InfoLog)
+    cmd := exec.Command(shellToUse, append(commandStringOption, command)...)
+    cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+    DebugPrintln("Command to execute >>> " + cmd.String(), InfoLog)
     err = cmd.Run()
     if err != nil{
-        fmt.Print("An error occured >>> ")
-        fmt.Println(cmd.Stderr)
+		os.Stderr.WriteString(err.Error() + "\n")
     }
     if cmd.Stdout != nil{
         //fmt.Println()
-        fmt.Println(cmd.Stdout)
+        //fmt.Println(cmd.Stdout)
     }
     return stdout.String(), stderr.String(), err
 }
 
-func GetAPIKey() (string){
-    err := godotenv.Load(filepath.Join(GetBaseDir(),".env"))
-    DebugPrint("grabbing api key from " + filepath.Join(GetBaseDir(), ".env"))
-    if err != nil{
-        fmt.Println("Error loading .env file")
+func getAndLoadChatTemplates() (ChatTemplateList, error)  {
+    DebugPrintln("Now attempting to load prompt files", InfoLog)
+    chat_template_list := ChatTemplateList{}
+    chat_templates_dir := "chat_templates"
+    files, err := os.ReadDir(filepath.Join(GetBaseDir(), chat_templates_dir))
+    if err != nil {
+        abs_path, err := filepath.Abs(chat_templates_dir)
+        if err != nil {
+            fmt.Println("Could not read directory " + abs_path)
+            return ChatTemplateList{}, err
+        }
+        fmt.Printf("There was an issue trying to read the directory %s\n", abs_path)
+        return ChatTemplateList{}, err
     }
-    return os.Getenv("OPENROUTER_API_KEY")
+
+    for _, chat_templates_file := range files {
+        if chat_templates_file.Type().IsRegular() {
+            chat_template_abs_path := filepath.Join(GetBaseDir(), chat_templates_dir, chat_templates_file.Name())
+            DebugPrintln("chat template file path being loaded: " + chat_template_abs_path, InfoLog)
+
+            // Read the file content
+            file_content, err := os.ReadFile(chat_template_abs_path)
+            if err != nil {
+                fmt.Printf("There was an issue attempting to open %s\n", chat_template_abs_path)
+                continue // Skip to the next file if there's an error reading this one
+            }
+
+            // Initialize a new chat_template for each file
+            var chat_templates_capture ChatTemplateList
+            err = json.Unmarshal(file_content, &chat_templates_capture)
+            if err != nil {
+                fmt.Printf("Warning! There is a syntax issue with this JSON chat_template file: %s\n", chat_template_abs_path)
+                fmt.Println("Checking other files...")
+                continue // Skip to the next file if there's a JSON syntax issue
+            }
+            //append both arrays here
+            chat_template_list.Templates = append(chat_templates_capture.Templates,chat_template_list.Templates...)
+            //chat_template_list.Templates = append(chat_template_list.Templates, chat_templates_content.Templates...)
+        }
+    }
+
+    return chat_template_list, nil
 }
 
-func last_command_in_history(file_name string) string {
-    DebugPrint("checking last command");
+func getChatTemplateFromName(chat_templates ChatTemplateList, prompt_name string) (ChatTemplate, error){
+    for _, prompt:= range chat_templates.Templates{
+        if prompt.Name == prompt_name{
+            return prompt, nil
+        }
+    }
+    return ChatTemplate{}, fmt.Errorf("chat template name was not found")
+}
+
+func getChatTemplatename(chat_template_list ChatTemplateList) ([]string, error){
+    chat_template_names:=[]string{}
+    for _, chat_template := range chat_template_list.Templates{
+            DebugPrintln("chat template name found " +  chat_template.Name, InfoLog)
+            if len(chat_template.Name) > 0{
+                chat_template_names = append(chat_template_names, chat_template.Name)
+            }
+    }
+    return chat_template_names,nil
+}
+
+func getCommonSettingsConfig(fpath string) (CommonSettings, error){
+    settings_file_content,err:=os.ReadFile(filepath.Join(GetBaseDir(), fpath))
+    if err != nil{
+        fmt.Println(err)
+        return CommonSettings{}, err
+    }
+
+    var common_settings CommonSettings
+    err=json.Unmarshal(settings_file_content, &common_settings )
+    if err != nil{
+        fmt.Println(err)
+        return CommonSettings{}, err
+    }
+    return common_settings,nil
+}
+func lastCommandInHistory(file_name string) string {
+    DebugPrintln("checking last command", InfoLog);
     last_command:=""
     bytesRead,err := os.ReadFile(file_name)
     if(err != nil){
+        fmt.Println("could not read or open history file")
         fmt.Println(err)
     }
     fileContent := string(bytesRead)
     lines := strings.Split(fileContent, "\n")
     last_command = lines[len(lines) - 1]
     if len(last_command) <= 0 {
-        fmt.Println("command history is empty")
+        fmt.Println("command history is empty.")
     }
 
-    DebugPrint("last command in history is " + last_command);
+    DebugPrintln("last command in history is " + last_command, InfoLog);
     return last_command
 }
 
+func listChatTemplateNames(){
+    chat_templates,err := getAndLoadChatTemplates()
+    if err != nil{
+        fmt.Println(err)
+        return
+    }
+    chat_templates_names, err := getChatTemplatename(chat_templates)
+    if err != nil{
+        fmt.Println(err)
+        os.Exit(1)
+    }
 
-func WriteAppendToLocalCommandHistory(file_name string, content_passed string, perm int){
+    for _, name := range chat_templates_names{
+        fmt.Println(name)
+    }
+}
+
+func showHistory(){
+    content, err:= os.ReadFile(filepath.Join(GetBaseDir(), "sbot_command_history.txt" ) )
+    if err != nil{
+        fmt.Println(err)
+    }
+    fmt.Println(string(content))
+}
+
+func writeAppendToLocalCommandHistory(file_name string, content_passed string, perm int){
     content_from_file, err:=os.ReadFile(file_name)
     space:= "\n"
     if err != nil{
-       fmt.Println("could read not read from the history file. Please see if it exists")
+       fmt.Println("Could read not read from the history file. Please see if it exists.")
     }
     if(len(content_from_file) <= 0){
         space=""
@@ -367,121 +355,9 @@ func WriteAppendToLocalCommandHistory(file_name string, content_passed string, p
     os.WriteFile(file_name, []byte(content_to_add), 700)
 }
 
-func ShowHistory(){
-    content, err:= os.ReadFile(filepath.Join(GetBaseDir(), "sbot_command_history.txt" ) )
-    if err != nil{
-        fmt.Println(err)
-    }
-    fmt.Println(string(content))
-}
-
-// util functions
-
-func GetBaseDir() string {
-    file_executable_path, err := os.Executable()
-    bin_dir := filepath.Dir(file_executable_path)
-	if err != nil {
-        fmt.Println(err)
-	}
-    base_dir := filepath.Dir(bin_dir)
-	return base_dir
-}
-
-func getStdinAsString() (string, error){
-    scanner := bufio.NewScanner(os.Stdin)
-    if scanner.Scan() {
-        input := scanner.Text()
-        return input, nil
-    }
-
-    if err := scanner.Err(); err != nil {
-        fmt.Println("Error reading from stdin:", err)
-        return "", nil
-    }
-    return "", nil
-}
-
-func StdinExist() bool{
-    fi, err := os.Stdin.Stat()
-    if err != nil {
-        fmt.Println(err)
-    }
-    if fi.Mode()&os.ModeCharDevice == 0 {
-		DebugPrint("There is stdin input available.")
-        return true
-	}
-    return false
-}
-
-func DebugPrint(msg string){
-    if *debug_enabled{
-        fmt.Println(msg)
-    }
-}
-func DebugPrintf(msg string){
-    if *debug_enabled{
-        fmt.Printf(msg)
-    }
-}
-
-//struct sections
-
-type PromptOption struct {
-    ChatRequestBody   ChatRequestBody   `json:"chat_request_body"`
-    Alias             string            `json:"alias"`
-    ID                int16             `json:"id"`
-    PlaceholderType   string            `json:"placeholder_type"`
-}
-type ChatRequestBody struct {
-    Model              string           `json:"model"`
-    Messages           []ChatAIMessages `json:"messages"`
-    Temperature        float64          `json:"temperature"`
-    MaxTokens          int              `json:"max_tokens"`
-    TopP               float64          `json:"top_p"`
-    FrequencyPenalty   float64          `json:"frequency_penalty"`
-    PresencePenalty    float64          `json:"presence_penalty"`
-}
-type ChatAIMessages struct {
-    Role    string `json:"role"`
-    Content string `json:"content"`
-}
-type ChatCompletion struct {
-    ID                string    `json:"id"`
-    Object            string    `json:"object"`
-    Created           int64     `json:"created"`
-    Model             string    `json:"model"`
-    Choices           []Choice  `json:"choices"`
-    Error             *Error     `json:"error"`
-    Usage             Usage     `json:"usage"`
-    SystemFingerprint *string   `json:"system_fingerprint"` // Use a pointer to handle null values
-}
-type Choice struct {
-    Index        int      `json:"index"`
-    Message      Message  `json:"message"`
-    Logprobs     *string  `json:"logprobs"` // Use a pointer to handle null values
-    FinishReason string   `json:"finish_reason"`
-}
-type Error struct {
-    Code    int       `json:"code"`
-    Message string    `json:"message"`
-    Metadata Metadata `json:"metadata"`
-}
-type Message struct {
-    Role    string `json:"role"`
-    Content string `json:"content"`
-}
-type Usage struct {
-    PromptTokens     int `json:"prompt_tokens"`
-    CompletionTokens int `json:"completion_tokens"`
-    TotalTokens      int `json:"total_tokens"`
-}
-type Metadata struct {
-	Raw          string `json:"raw"`
-	ProviderName string `json:"provider_name"`
-}
 type CommonSettings struct{
     AllowDangerousCommands bool     `json:"allow_dangerous_commands"`
     Shell                  string   `json:"shell"`
     DangerousCommands      []string `json:"dangerous_commands"`
+    DefaultChatTemplate    string   `json:"default_chat_template"`
 }
-
