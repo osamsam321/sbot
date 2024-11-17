@@ -81,7 +81,7 @@ You can run a query without a specified chat template name. Sbot will automatica
 sbot -q "find all files in my current directory that are txt or json files"
 
 ```
-### PIPE
+### Pipe
 
 You can also pipe content.
 
