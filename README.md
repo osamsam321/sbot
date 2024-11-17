@@ -14,6 +14,7 @@
   - [Run Current Command](#run-current-command)
   - [Run Last Command from Local History](#run-last-command-from-local-history)
   - [Show Local History](#show-local-history)
+  - [Show All Chat Template names](#chat-template-names)
   - [Enable Debug Mode](#enable-debug-mode)
   - [Help](#help)
 
@@ -120,6 +121,15 @@ sbot -l
 ```
 
 ### Show Local History
+
+Show the local history of commands executed with `sbot`.
+
+**Usage**:
+```sh
+sbot -y
+```
+
+### Chat Template Names
 
 Show the local history of commands executed with `sbot`.
 
