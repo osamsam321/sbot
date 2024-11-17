@@ -138,8 +138,6 @@ sbot -d
 ```
 ### Additionals settings such shell type, a list of commands to block, or default chat templates can be specified in the settings.json file
 
-Enable debug mode to get more detailed output for troubleshooting.
-
 **Usage**:
 ```sh
 vi ~/.sbot/settings.json
