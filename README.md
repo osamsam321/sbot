@@ -1,7 +1,7 @@
 
 # SBOT Tool Instructions
 
-`sbot` tool is a command-line utility that integrates with [OpenRouter](https://openrouter.ai) to deliver chat completions to your cli. `sbot` works by utilizing prompt files stored in designated folders to configure chats with models available on OpenRouter.ai. There are four default prompts in the prompt folder, which you can use as templates to create your own. Below are instructions on how to use the various commands available in `sbot`.
+`sbot` tool is a command-line utility that integrates with [OpenRouter](https://openrouter.ai) to deliver chat completions to your cli. `sbot` works by utilizing chat templates files stored in designated folders to configure chats with models available on OpenRouter.ai. There are four default templates in the chat_template folder, which you can use as templates to create your own. Below are instructions on how to use the various commands available in `sbot`.
 ## Table of Contents
 
 - [Set Your API Key](#set-your-api-key)
@@ -59,7 +59,7 @@ sbot [options]
 
 ### Basic Query
 
-Specifiy a chat template to use and add your query. Your query will be added inside of your placeholder and content defined in the prompts.
+Specifiy a chat template to use and add your query. Your query will be added inside of your placeholder and content defined in the chat template.
 
 **Usage**:
 ```sh
