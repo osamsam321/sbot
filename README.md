@@ -59,7 +59,7 @@ sbot [options]
 
 ### Basic Query
 
-Specifiy a chat template to use and add your query. Your query will be added inside of your placeholder and content defined in the chat template.
+Specifiy a chat template name to use and add your query. Your query will be added inside of your placeholder and content defined in the chat template.
 
 **Usage**:
 ```sh
@@ -74,7 +74,7 @@ sbot -t explain-nix -q "ls -ltrah"
 ```
 ### Shortcut Query
 
-You can run a query without a specified prompt alias. Sbot will automatically use the prompt with lowest ID found in your prompts. The nix prompt has the lowest by default
+You can run a query without a specified chat template name. Sbot will automatically use a chat template specified in the settings.json file. The nix prompt has the lowest by default
 
 **Example**:
 ```sh
@@ -136,7 +136,14 @@ Enable debug mode to get more detailed output for troubleshooting.
 ```sh
 sbot -d
 ```
+### Additionals settings such shell type, a list of commands to block, or default chat templates can be specified in the settings.json file
 
+Enable debug mode to get more detailed output for troubleshooting.
+
+**Usage**:
+```sh
+vi ~/.sbot/settings.json
+```
 ### Help
 
 Show the help message for `sbot`.
