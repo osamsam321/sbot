@@ -1,7 +1,7 @@
 {
     "chat_templates": [
         {
-            "name": "explain-sh",
+            "name":"explain-sh",
             "placeholder_type": "{}",
             "chat_request_body": {
                 "model": "meta-llama/llama-3.1-70b-instruct:free",
@@ -23,7 +23,7 @@
             }
         },
         {
-            "name": "explain-fish",
+            "name":"explain-fish",
             "placeholder_type": "{}",
             "chat_request_body": {
                 "model": "meta-llama/llama-3.1-70b-instruct:free",
