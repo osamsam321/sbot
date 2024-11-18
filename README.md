@@ -48,7 +48,6 @@ For Bash e.g.
 
 ```
 vi .bashrc
-export PATH="$HOME/.sbot:$PATH"
 export PATH="$HOME/.sbot/bin:$PATH"
 source ~/.bashrc
 ```
