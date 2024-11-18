@@ -16,6 +16,7 @@
   - [Show Local History](#show-local-history)
   - [Show All Chat Template names](#chat-template-names)
   - [Enable Debug Mode](#enable-debug-mode)
+  - [Additionals settings](#additional-settings)
   - [Help](#help)
 
 ## Install sbot
@@ -146,7 +147,9 @@ Enable debug mode to get more detailed output for troubleshooting.
 ```sh
 sbot -d
 ```
-### Additionals settings such shell type, a list of commands to block, or default chat templates can be specified in the settings.json file
+### Additional settings 
+
+Edit shell type, a list of commands to block, or default chat templates can be specified in the settings.json file
 
 **Usage**:
 ```sh
