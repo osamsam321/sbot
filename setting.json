@@ -1,7 +1,7 @@
 {
     "allow_dangerous_commands": false,
     "shell": "/bin/bash",
-    "default_chat_template": "nix",
+    "default_chat_template": "sh",
     "dangerous_commands": [
         "rm",
         "mv",
