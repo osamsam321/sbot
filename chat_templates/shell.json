@@ -1,7 +1,7 @@
 {
     "chat_templates": [
         {
-            "name":"nix",
+            "name":"sh",
             "placeholder_type":"{}",
             "chat_request_body":{
                 "model": "meta-llama/llama-3.1-70b-instruct:free",
