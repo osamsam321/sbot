@@ -65,7 +65,7 @@ sbot -t <chat template> -q "<your query>"
 
 **Example**:
 ```sh
-sbot -t nix -q "find all files in my current directory that are txt or json files"
+sbot -t sh -q "find all files in my current directory that are txt or json files"
 sbot -t explain-nix -q "ls -ltrah"
 
 ```
