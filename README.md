@@ -10,7 +10,7 @@
 - [Commands](#commands)
   - [Shell Query](#basic-query)
   - [Shortcut Query](#shortcut-query)
-  - [PIPE](#pipe)
+  - [Stdin](#pipe)
   - [Run Current Command](#run-current-command)
   - [Run Last Command from Local History](#run-last-command-from-local-history)
   - [Show Local History](#show-local-history)
