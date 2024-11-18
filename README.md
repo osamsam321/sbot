@@ -52,14 +52,6 @@ export PATH="$HOME/.sbot/bin:$PATH"
 source ~/.bashrc
 ```
 
-## Basic Usage
-
-Once `sbot` is installed, you can run it from the command line. The general syntax for using `sbot` is:
-
-```sh
-sbot [options]
-```
-
 ## Commands
 
 ### Basic Query
