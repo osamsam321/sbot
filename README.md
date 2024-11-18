@@ -44,7 +44,7 @@ sed -i "s/OPENROUTER_API_KEY=/OPENROUTER_API_KEY=$OPENROUTER_API_KEY/" .env
 
 Please follow export instructions for your shell. 
 
-For Bash e.g.
+Bash Example
 
 ```
 vi .bashrc
