@@ -110,7 +110,7 @@ func handleUserQuery(user_query *string){
         }
 
     }else{
-        DebugPrintln("Prompt option not supplied. Using default chat template body found in setting.json", InfoLog)
+        DebugPrintln("Chat template option not supplied. Using default chat template body found in setting.json", InfoLog)
         commonSettings, err:=getCommonSettingsConfig("setting.json")
         if err != nil{
             fmt.Println("could not open setting file")

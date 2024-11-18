@@ -1,14 +1,14 @@
 {
     "chat_templates": [
         {
-            "name": "explain-nix",
+            "name": "explain-sh",
             "placeholder_type": "{}",
             "chat_request_body": {
                 "model": "meta-llama/llama-3.1-70b-instruct:free",
                 "messages": [
                     {
                         "role": "system",
-                        "content": "You are an assistant and explains what a *nix shell given by the user does. Do not include any markdown or formating."
+                        "content": "You are an assistant and explains what a POSIX shell given by the user does. Do not include any markdown or formating."
                     },
                     {
                         "role": "user",
