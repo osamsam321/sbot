@@ -40,15 +40,19 @@ Optional. If you have a OPENROUTER_API_KEY env variable, you can run this comman
 ```
 sed -i "s/OPENROUTER_API_KEY=/OPENROUTER_API_KEY=$OPENROUTER_API_KEY/" .env
 ```
-## Add an alias
+## Add To Path
 
-Add alias to a .bashrc, zshrc or any alias files e.g.
+Please follow export instructions for your shell. 
+
+For Bash e.g.
 
 ```
 vi .bashrc
-alias sbot="~/.sbot/bin/sbot"
+export PATH="$HOME/.sbot:$PATH"
+export PATH="$HOME/.sbot/bin:$PATH"
 source ~/.bashrc
 ```
+
 ## Basic Usage
 
 Once `sbot` is installed, you can run it from the command line. The general syntax for using `sbot` is:
