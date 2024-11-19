@@ -66,12 +66,12 @@ sbot -t <chat template> -q "<your query>"
 **Example**:
 ```sh
 sbot -t sh -q "find all files in my current directory that are txt or json files"
-sbot -t explain-nix -q "ls -ltrah"
+sbot -t explain-sh -q "ls -ltrah"
 
 ```
 ### Shortcut Query
 
-You can run a query without a specified chat template name. Sbot will automatically use a chat template specified in the settings.json file. The nix chat template is enabled by default. 
+You can run a query without a specified chat template name. Sbot will automatically use a chat template specified in the settings.json file. The sh chat template is enabled by default. 
 
 **Example**:
 ```sh
@@ -90,7 +90,7 @@ You can still use the query option as a add on.
 
 **Example**:
 ```sh
-echo "list files" | sbot -t nix -q " that have the word cat in the filename."
+echo "list files" | sbot -t sh -q " that have the word cat in the filename."
 ```
 ### Run Current Command
 
@@ -103,7 +103,7 @@ sbot -x
 
 **Example**:
 ```sh
-sbot -q "list files in sorted order" -t nix -x
+sbot -q "list files in sorted order" -t sh -x
 ```
 
 
