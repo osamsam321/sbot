@@ -126,7 +126,7 @@ sbot -y
 
 ### Chat Template Names
 
-Show the local history of commands executed with `sbot`.
+Show all chat templates.
 
 **Usage**:
 ```sh
