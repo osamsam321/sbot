@@ -5,7 +5,7 @@
 ## Table of Contents
 
 - [Set Your API Key](#set-your-api-key)
-- [Add Sbot to Path](#add-sbot-to-path)
+- [Add sbot to path](#add-sbot-to-path)
 - [Basic Usage](#basic-usage)
 - [Commands](#commands)
   - [Shell Query](#basic-query)
