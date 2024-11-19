@@ -98,11 +98,13 @@ func handleUserQuery(user_query *string){
                     fmt.Println(api_response.Error.Metadata.Raw)
                 }else{
                     api_msg_content:=api_response.Choices[0].Message.Content
-                    fmt.Println(api_msg_content)
-                    writeAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_msg_content, 700)
-                    if *execute_current_command{
+                    // output to stdout when the execute argument (-x) is not used
+                    if !*execute_current_command{
+                        fmt.Println(api_msg_content)
+                    }else{
                         executeCommand(api_msg_content)
                     }
+                    writeAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_msg_content, 700)
                 }
             if err!= nil{
                 fmt.Println("options are empty from site")
@@ -143,11 +145,13 @@ func handleUserQuery(user_query *string){
             fmt.Println(api_response.Error.Metadata.Raw)
         }else{
             api_msg_content:=api_response.Choices[0].Message.Content
-            fmt.Println(api_msg_content)
-            writeAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_msg_content, 700)
-            if *execute_current_command{
+            // output to stdout when the execute argument (-x) is not used
+            if !*execute_current_command{
+                fmt.Println(api_msg_content)
+            }else{
                 executeCommand(api_msg_content)
             }
+            writeAppendToLocalCommandHistory(filepath.Join(GetBaseDir(), "sbot_command_history.txt"), api_msg_content, 700)
         }
     }
 
@@ -208,14 +212,12 @@ func executeCommand(command string)(string, string, error){
     cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
     DebugPrintln("Command to execute >>> " + cmd.String(), InfoLog)
+    // output command to stdout or stderr when the execute option (-x) is not used
     err = cmd.Run()
     if err != nil{
-		os.Stderr.WriteString(err.Error() + "\n")
+    	os.Stderr.WriteString(err.Error() + "\n")
     }
-    if cmd.Stdout != nil{
-        //fmt.Println()
-        //fmt.Println(cmd.Stdout)
-    }
+
     return stdout.String(), stderr.String(), err
 }
 
