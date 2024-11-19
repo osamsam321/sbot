@@ -97,7 +97,7 @@ echo "list files" | sbot -t sh -q " that have the word cat in the filename."
 
 **Usage**:
 ```sh
-sbot -x ...
+sbot -x
 ```
 
 **Example**:
