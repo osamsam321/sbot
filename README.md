@@ -5,7 +5,7 @@
 ## Table of Contents
 
 - [Set Your API Key](#set-your-api-key)
-- [Add an alias](#add-an-alias)
+- [Add Sbot to Path](#add-sbot-to-path)
 - [Basic Usage](#basic-usage)
 - [Commands](#commands)
   - [Shell Query](#basic-query)
@@ -40,7 +40,7 @@ Optional. If you have a OPENROUTER_API_KEY env variable, you can run this comman
 ```
 sed -i "s/OPENROUTER_API_KEY=/OPENROUTER_API_KEY=$OPENROUTER_API_KEY/" ~/.sbot/.env
 ```
-## Add To Path
+## Add Sbot to Path
 
 Please follow export instructions for your shell. 
 
