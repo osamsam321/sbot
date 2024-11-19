@@ -38,7 +38,7 @@ vi .env
 Optional. If you have a OPENROUTER_API_KEY env variable, you can run this command.
 
 ```
-sed -i "s/OPENROUTER_API_KEY=/OPENROUTER_API_KEY=$OPENROUTER_API_KEY/" .env
+sed -i "s/OPENROUTER_API_KEY=/OPENROUTER_API_KEY=$OPENROUTER_API_KEY/" ~/.sbot/.env
 ```
 ## Add To Path
 
