@@ -5,7 +5,7 @@
 ## Table of Contents
 
 - [Set Your API Key](#set-your-api-key)
-- [Add an alias](#add-an-alias)
+- [Add sbot to path](#add-sbot-to-path)
 - [Basic Usage](#basic-usage)
 - [Commands](#commands)
   - [Shell Query](#basic-query)
@@ -38,9 +38,9 @@ vi .env
 Optional. If you have a OPENROUTER_API_KEY env variable, you can run this command.
 
 ```
-sed -i "s/OPENROUTER_API_KEY=/OPENROUTER_API_KEY=$OPENROUTER_API_KEY/" .env
+sed -i "s/OPENROUTER_API_KEY=/OPENROUTER_API_KEY=$OPENROUTER_API_KEY/" ~/.sbot/.env
 ```
-## Add To Path
+## Add Sbot to Path
 
 Please follow export instructions for your shell. 
 
@@ -66,12 +66,12 @@ sbot -t <chat template> -q "<your query>"
 **Example**:
 ```sh
 sbot -t sh -q "find all files in my current directory that are txt or json files"
-sbot -t explain-nix -q "ls -ltrah"
+sbot -t explain-sh -q "ls -ltrah"
 
 ```
 ### Shortcut Query
 
-You can run a query without a specified chat template name. Sbot will automatically use a chat template specified in the settings.json file. The nix chat template is enabled by default. 
+You can run a query without a specified chat template name. Sbot will automatically use a chat template specified in the settings.json file. The sh chat template is enabled by default. 
 
 **Example**:
 ```sh
@@ -90,11 +90,10 @@ You can still use the query option as a add on.
 
 **Example**:
 ```sh
-echo "list files" | sbot -t nix -q " that have the word cat in the filename."
+echo "list files" | sbot -t sh -q " that have the word cat in the filename."
 ```
 ### Run Current Command
 
-Run the last command that exists in the local sbot history file.
 
 **Usage**:
 ```sh
@@ -103,7 +102,7 @@ sbot -x
 
 **Example**:
 ```sh
-sbot -q "list files in sorted order" -t nix -x
+sbot -q "list files in sorted order" -t sh -x
 ```
 
 
@@ -127,7 +126,7 @@ sbot -y
 
 ### Chat Template Names
 
-Show the local history of commands executed with `sbot`.
+Show all chat templates.
 
 **Usage**:
 ```sh
