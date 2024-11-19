@@ -94,11 +94,10 @@ echo "list files" | sbot -t sh -q " that have the word cat in the filename."
 ```
 ### Run Current Command
 
-Run the last command that exists in the local sbot history file.
 
 **Usage**:
 ```sh
-sbot -x
+sbot -x ...
 ```
 
 **Example**:
